@@ -1,0 +1,2061 @@
+html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>KIZ OS</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+  
+  #phone {
+    width: 100vw;
+    height: 100vh;
+    max-width: 420px;
+    max-height: 900px;
+    background: linear-gradient(160deg, #1a1a2e, #16213e, #0f3460);
+    position: relative;
+    overflow: hidden;
+    border-radius: 0;
+    box-shadow: 0 0 60px rgba(0,100,255,0.3);
+  }
+  @media (min-width: 500px) {
+    #phone { border-radius: 40px; border: 8px solid #222; }
+  }
+
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    color: #fff;
+  }
+  .screen.active { display: flex; }
+
+  /* ===== STATUS BAR ===== */
+  .statusbar {
+    height: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+  }
+  .status-right { display: flex; gap: 6px; align-items: center; }
+  .status-icon { font-size: 11px; }
+
+  /* ===== SETUP / FIRST BOOT ===== */
+  #setup {
+    background: linear-gradient(180deg, #0a0e27 0%, #1a1f3a 50%, #0f1a3a 100%);
+    padding: 40px 24px;
+    justify-content: center;
+    text-align: center;
+  }
+  .logo-big {
+    font-size: 56px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #4facfe, #00f2fe, #43e97b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .logo-sub {
+    font-size: 12px;
+    letter-spacing: 6px;
+    color: #8899bb;
+    margin-bottom: 40px;
+  }
+  .setup-step { display: none; animation: fadeIn 0.4s; }
+  .setup-step.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px);} to {opacity:1;transform:translateY(0);} }
+  
+  .setup-title { font-size: 22px; margin-bottom: 12px; font-weight: 700; }
+  .setup-desc { font-size: 13px; color: #99aabb; margin-bottom: 24px; line-height: 1.5; }
+  
+  .input-group { margin-bottom: 14px; text-align: left; }
+  .input-group label {
+    display: block; font-size: 11px; color: #7a8ba8; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .input-group input, .input-group select {
+    width: 100%; padding: 13px 15px; border-radius: 12px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; font-size: 14px; outline: none;
+    transition: 0.2s;
+  }
+  .input-group input:focus { border-color: #4facfe; background: rgba(79,172,254,0.1); }
+
+  .btn {
+    width: 100%; padding: 14px; border-radius: 14px;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: #001428; border: none; font-size: 15px;
+    font-weight: 700; cursor: pointer; margin-top: 8px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.secondary {
+    background: rgba(255,255,255,0.08); color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .btn-sm {
+    padding: 8px 16px; border-radius: 10px; font-size: 12px;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: #001428; border: none; font-weight: 700; cursor: pointer;
+  }
+
+  .progress-dots {
+    display: flex; justify-content: center; gap: 8px; margin-top: 24px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: 0.3s; }
+  .dot.active { background: #4facfe; width: 22px; border-radius: 4px; }
+
+  /* ===== HOME SCREEN ===== */
+  #home {
+    background:
+      radial-gradient(circle at 20% 10%, rgba(79,172,254,0.25), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(67,233,123,0.18), transparent 50%),
+      linear-gradient(160deg, #0f1a3a, #1a1a2e);
+    flex-direction: column;
+  }
+  
+  .home-content {
+    flex: 1; overflow-y: auto; padding: 16px 16px 90px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .home-content::-webkit-scrollbar { display: none; }
+
+  .greeting {
+    text-align: center; margin-bottom: 20px; padding-top: 6px;
+  }
+  .greeting .time-big {
+    font-size: 48px; font-weight: 200; letter-spacing: 2px;
+    background: linear-gradient(135deg, #fff, #99bbdd);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .greeting .date { font-size: 12px; color: #8899bb; margin-top: 2px; text-transform: capitalize; }
+
+  .apps-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px 10px; margin-top: 16px;
+  }
+  .app-icon {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; cursor: pointer; transition: transform 0.15s;
+  }
+  .app-icon:active { transform: scale(0.88); }
+  .app-icon .icon-box {
+    width: 56px; height: 56px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    position: relative;
+  }
+  .app-icon .label {
+    font-size: 10px; color: #dde6f5; text-align: center;
+    max-width: 66px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .badge {
+    position: absolute; top: -4px; right: -4px;
+    background: #ff3b5c; color: #fff; font-size: 9px;
+    min-width: 17px; height: 17px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px; font-weight: 700; border: 2px solid #1a1a2e;
+  }
+  
+    /* Icon colors */
+  .ic-phone { background: linear-gradient(135deg,#34d399,#059669); }
+  .ic-msg { background: linear-gradient(135deg,#4ade80,#16a34a); }
+  .ic-calc { background: linear-gradient(135deg,#fbbf24,#d97706); }
+  .ic-cal { background: linear-gradient(135deg,#f87171,#dc2626); }
+  .ic-settings { background: linear-gradient(135deg,#94a3b8,#475569); }
+  .ic-store { background: linear-gradient(135deg,#4facfe,#0066ff); }
+  .ic-camera { background: linear-gradient(135deg,#a78bfa,#7c3aed); }
+  .ic-gallery { background: linear-gradient(135deg,#f472b6,#db2777); }
+  .ic-browser { background: linear-gradient(135deg,#38bdf8,#0284c7); }
+  .ic-clock { background: linear-gradient(135deg,#facc15,#ca8a04); }
+  .ic-files { background: linear-gradient(135deg,#fbbf24,#f59e0b); }
+  .ic-notes { background: linear-gradient(135deg,#fde047,#eab308); }
+
+  /* ===== DOCK ===== */
+  .dock {
+    position: absolute; bottom: 12px; left: 12px; right: 12px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 24px; padding: 10px 12px;
+    display: flex; justify-content: space-around;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .dock .app-icon .icon-box { width: 50px; height: 50px; font-size: 24px; }
+
+  /* ===== SCREEN HEADER ===== */
+  .screen-header {
+    padding: 12px 18px; display: flex; align-items: center;
+    gap: 12px; background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .back-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); border: none; color: #fff;
+    font-size: 18px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .screen-header h2 { font-size: 17px; font-weight: 700; flex: 1; }
+
+  .screen-body { flex: 1; overflow-y: auto; padding: 16px; }
+  .screen-body::-webkit-scrollbar { display: none; }
+
+  /* ===== CALCULATOR ===== */
+  #calc .screen-body { display: flex; flex-direction: column; padding: 12px; }
+  .calc-display {
+    flex: 0 0 auto; padding: 20px 12px; text-align: right;
+    font-size: 42px; font-weight: 300; min-height: 100px;
+    display: flex; align-items: flex-end; justify-content: flex-end;
+    word-break: break-all; color: #fff;
+  }
+  .calc-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; flex: 1;
+  }
+  .calc-btn {
+    border: none; border-radius: 18px; font-size: 22px;
+    font-weight: 600; color: #fff; cursor: pointer;
+    background: rgba(255,255,255,0.09); transition: 0.1s;
+    min-height: 60px;
+  }
+  .calc-btn:active { transform: scale(0.94); background: rgba(255,255,255,0.2); }
+  .calc-btn.op { background: linear-gradient(135deg,#fbbf24,#d97706); color:#000; }
+  .calc-btn.eq { background: linear-gradient(135deg,#4facfe,#0066ff); }
+  .calc-btn.fn { background: rgba(255,255,255,0.15); color: #4facfe; }
+
+  /* ===== SETTINGS ===== */
+  .settings-group { margin-bottom: 20px; }
+  .settings-group-title {
+    font-size: 11px; color: #7a8ba8; text-transform: uppercase;
+    letter-spacing: 1.5px; margin-bottom: 8px; padding-left: 6px;
+  }
+  .settings-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px; background: rgba(255,255,255,0.06);
+    border-radius: 12px; margin-bottom: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .settings-item .si-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0;
+  }
+  .settings-item .si-text { flex: 1; }
+  .settings-item .si-title { font-size: 14px; }
+  .settings-item .si-sub { font-size: 11px; color: #7a8ba8; margin-top: 1px; }
+
+  .toggle {
+    width: 46px; height: 26px; border-radius: 14px;
+    background: rgba(255,255,255,0.15); position: relative;
+    cursor: pointer; transition: 0.25s; flex-shrink: 0;
+  }
+  .toggle.on { background: linear-gradient(135deg,#4facfe,#00f2fe); }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; transition: 0.25s;
+  }
+  .toggle.on::after { left: 23px; }
+
+  /* ===== APP STORE ===== */
+  .store-hero {
+    background: linear-gradient(135deg, #4facfe, #0066ff);
+    border-radius: 18px; padding: 20px; margin-bottom: 18px;
+    text-align: center;
+  }
+  .store-hero h3 { font-size: 18px; margin-bottom: 6px; }
+  .store-hero p { font-size: 12px; opacity: 0.9; }
+  .app-tool input,.app-tool textarea,.app-tool select {width:100%;padding:11px;margin:6px 0;border-radius:10px;background:#111a31;color:#fff;border:1px solid #334155;font:inherit;}
+  .app-tool textarea {min-height:100px;resize:vertical;}
+  .app-tool button {margin:5px 4px 5px 0;}
+  .app-tool .tool-box {background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);padding:12px;border-radius:13px;margin:10px 0;text-align:left;}
+  .store-size {font-size:11px;color:#9fb4d8;margin-top:5px;}
+  .app-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; background: rgba(255,255,255,0.06);
+    border-radius: 14px; margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .app-card .ac-icon {
+    width: 50px; height: 50px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .app-card .ac-info { flex: 1; min-width: 0; }
+  .app-card .ac-name { font-size: 14px; font-weight: 600; }
+  .app-card .ac-desc { font-size: 11px; color: #8899bb; margin-top: 2px; }
+  .install-btn {
+    padding: 7px 16px; border-radius: 20px; font-size: 12px;
+    font-weight: 700; cursor: pointer; border: none;
+    background: linear-gradient(135deg,#4facfe,#00f2fe);
+    color: #001428; flex-shrink: 0;
+  }
+  .install-btn.installed {
+    background: rgba(67,233,123,0.2); color: #43e97b;
+  }
+  .install-btn.loading { background: rgba(255,255,255,0.15); color: #8899bb; }
+
+  /* ===== APP STORE MODERNE ===== */
+  #store .screen-body {padding:14px 13px 28px;}
+  .store-hero {position:relative;overflow:hidden;background:radial-gradient(circle at 10% 10%,#ffffff35,transparent 38%),linear-gradient(135deg,#0879e8,#5742dc 58%,#a83ed1);border-radius:22px;padding:19px 17px;margin-bottom:15px;text-align:left;box-shadow:0 10px 28px #0003}
+  .store-hero::after {content:'✦';position:absolute;right:17px;top:3px;font-size:78px;color:#ffffff1c;transform:rotate(15deg)}
+  .store-hero-icon {font-size:27px;margin-bottom:7px}
+  .store-hero h3 {font-size:19px;line-height:1.2;margin-bottom:7px;max-width:240px}
+  .store-hero p {font-size:12px;line-height:1.45;opacity:.9;max-width:280px}
+  .store-hero-stats {display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .store-hero-stats span {background:#ffffff20;border:1px solid #ffffff24;border-radius:30px;padding:6px 9px;font-size:10px}
+  .store-search-wrap {display:flex;align-items:center;gap:8px;background:#0c1730;border:1px solid #334766;border-radius:15px;padding:0 10px;margin:14px 0 18px}
+  .store-search-wrap span {font-size:17px}
+  .store-search-wrap input {flex:1;min-width:0;padding:13px 0;background:transparent;border:0;outline:none;color:#fff;font:inherit;font-size:13px}
+  .store-search-wrap button {background:#ffffff12;border:0;border-radius:8px;color:#dbeafe;width:27px;height:27px;font-size:20px}
+  .store-section-title {display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 2px 10px}
+  .store-section-title b {font-size:14px}.store-section-title small {font-size:10px;color:#93a7c7}
+  .store-categories {display:flex;gap:7px;overflow-x:auto;padding:2px 1px 10px;margin-bottom:8px;scrollbar-width:none}
+  .store-categories::-webkit-scrollbar {display:none}
+  .store-chip {flex:0 0 auto;border:1px solid #334766;background:#111e38;color:#cbd8ed;border-radius:22px;padding:9px 12px;font-size:11px;font-weight:600;white-space:nowrap}
+  .store-chip.active {background:linear-gradient(135deg,#4facfe,#7560ff);border-color:transparent;color:white;box-shadow:0 4px 13px #2875ff44}
+  .store-results-line {display:flex;align-items:center;justify-content:space-between;margin:8px 3px 11px;color:#9fb4d8;font-size:11px}
+  .store-results-line button {border:0;background:transparent;color:#7dd3fc;font-size:11px}
+  #storeList {display:flex;flex-direction:column;gap:9px}
+  #store .app-card {position:relative;gap:10px;padding:11px;background:linear-gradient(115deg,#ffffff0d,#ffffff05);border:1px solid #ffffff12;border-radius:17px;margin:0;min-width:0;transition:transform .15s,border-color .15s}
+  #store .app-card:active {transform:scale(.985)}
+  #store .app-card .ac-icon {width:49px;height:49px;border-radius:15px;box-shadow:0 5px 12px #0003;font-size:25px}
+  #store .app-card .ac-name {font-size:13px;line-height:1.3}
+  #store .app-card .ac-desc {font-size:10px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  #store .store-size {font-size:10px;margin-top:4px}
+  #store .install-btn {padding:8px 11px;border-radius:12px;min-width:75px;font-size:11px}
+  .store-empty {text-align:center;padding:28px 15px;background:#ffffff08;border:1px dashed #ffffff22;border-radius:16px;color:#aab8d0}
+  .store-empty div {font-size:32px;margin-bottom:8px}
+  .history-panel {background:linear-gradient(145deg,#ffffff0b,#ffffff04);border:1px solid #ffffff14;border-radius:16px;padding:14px;margin:10px 0}
+  .history-panel h3 {font-size:15px;margin-bottom:8px;color:#d8eaff}
+  .history-panel p,.history-panel li {font-size:12px;line-height:1.6;color:#c4d2e8}
+  .history-panel ul {padding-left:18px;margin:7px 0}
+  /* ===== CALENDAR ===== */
+  .cal-header { text-align: center; margin-bottom: 16px; }
+  .cal-header .month { font-size: 20px; font-weight: 700; }
+  .cal-header .year { font-size: 12px; color: #8899bb; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day-name { text-align: center; font-size: 10px; color: #7a8ba8; padding: 6px 0; }
+  .cal-day {
+    text-align: center; padding: 9px 0; font-size: 13px;
+    border-radius: 50%; cursor: pointer;
+  }
+  .cal-day.today { background: linear-gradient(135deg,#4facfe,#00f2fe); color:#001428; font-weight:700; }
+  .cal-day.other { color: #445566; }
+
+  /* ===== FILES ===== */
+  .file-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; background: rgba(255,255,255,0.06);
+    border-radius: 12px; margin-bottom: 8px;
+  }
+  .file-item .fi-icon { font-size: 22px; }
+  .file-item .fi-name { flex: 1; font-size: 13px; }
+  .file-item .fi-size { font-size: 11px; color: #7a8ba8; }
+
+  /* ===== NOTIFICATION TOAST ===== */
+  .toast {
+    position: absolute; top: 44px; left: 50%; transform: translateX(-50%);
+    background: rgba(30,40,60,0.95); color: #fff;
+    padding: 10px 20px; border-radius: 20px; font-size: 12px;
+    border: 1px solid rgba(79,172,254,0.4);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    z-index: 999; opacity: 0; pointer-events: none;
+    transition: 0.3s; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; top: 52px; }
+
+  /* ===== LOCK MODE / DISABLED ===== */
+  .disabled-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+    display: none; flex-direction: column; align-items: center;
+    justify-content: center; z-index: 500; padding: 30px; text-align: center;
+  }
+  .disabled-overlay.show { display: flex; }
+  .disabled-overlay .do-icon { font-size: 50px; margin-bottom: 16px; }
+  .disabled-overlay h3 { font-size: 18px; margin-bottom: 8px; }
+  .disabled-overlay p { font-size: 13px; color: #99aabb; margin-bottom: 20px; line-height: 1.5; }
+
+  /* ===== CAMERA / GALLERY ===== */
+  .gallery-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+  }
+  .gallery-grid .g-item {
+    aspect-ratio: 1; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+  }
+
+  .card-phone { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); padding:16px; border-radius:18px; }
+  .dial-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
+  .dial-grid button { padding:14px; border-radius:14px; background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.08); font-size:20px; }
+  #adminBody label {display:block;font-size:11px;color:#7a8ba8;margin:12px 0 5px;text-transform:uppercase;letter-spacing:1px}
+  #adminBody .settings-group {background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<div id="phone">
+
+  <!-- STATUS BAR -->
+  <div class="statusbar" id="statusbar" style="display:none">
+    <span id="statusTime">--:--</span>
+    <div class="status-right">
+      <span class="status-icon" id="icBluetooth">ᛒ</span>
+      <span class="status-icon" id="icData">▮▮▮</span>
+      <span class="status-icon" id="icWifi">◉</span>
+      <span class="status-icon" id="icBattery">100% 🔋</span>
+    </div>
+  </div>
+
+  <!-- ============ SETUP SCREEN ============ -->
+  <div class="screen active" id="setup">
+    <div class="logo-big">KIZ</div>
+    <div class="logo-sub">K·I·Z OS</div>
+
+    <!-- STEP 1: Welcome -->
+    <div class="setup-step active" id="step1">
+      <div class="setup-title">Bienvenue sur KIZ OS</div>
+      <div class="setup-desc">
+        KIZ OS — votre environnement virtuel personnel.<br><br>Configurez votre appareil pour commencer.
+      </div>
+      <button class="btn" onclick="nextStep(2)">Commencer</button>
+      <div class="progress-dots"><span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+
+    <!-- STEP 2: Language -->
+    <div class="setup-step" id="step2">
+      <div class="setup-title">Langue & Région</div>
+      <div class="setup-desc">Choisissez votre langue préférée pour l'appareil.</div>
+      <div class="input-group">
+        <label>Langue</label>
+        <select id="setupLang">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+          <option value="sw">Kiswahili</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Pays / Région</label>
+        <select id="setupRegion">
+          <option>RDC - Congo</option>
+          <option>France</option>
+          <option>Canada</option>
+          <option>Belgique</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <button class="btn" onclick="nextStep(3)">Continuer</button>
+      <div class="progress-dots"><span class="dot"></span><span class="dot active"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+
+    <!-- STEP 3: Account -->
+    <div class="setup-step" id="step3">
+      <div class="setup-title">Créer votre compte KIZ</div>
+      <div class="setup-desc">Entrez votre nom. KIZ OS générera votre numéro virtuel et créditera 2 Go de bienvenue une seule fois pour cette installation.</div>
+      <div class="input-group">
+        <label>Nom du compte</label>
+        <input type="text" id="setupName" placeholder="Entrez votre nom" maxlength="40">
+      </div>
+      <button class="btn" onclick="validateAccount()">Créer le compte</button>
+      <div class="progress-dots"><span class="dot"></span><span class="dot"></span><span class="dot active"></span><span class="dot"></span></div>
+    </div>
+
+    <!-- STEP 4: Ready -->
+    <div class="setup-step" id="step4">
+      <div class="setup-title">C'est prêt ! 🎉</div>
+      <div class="setup-desc">
+        Votre appareil KIZ OS est configuré.<br><br>
+        N'oubliez pas : pour utiliser l'App Store et télécharger des applications, vous devez activer les <b>Données mobiles</b> dans les Paramètres.
+      </div>
+      <button class="btn" onclick="finishSetup()">Accéder à l'appareil</button>
+      <div class="progress-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot active"></span></div>
+    </div>
+  </div>
+
+
+  <!-- ============ HOME SCREEN ============ -->
+  <div class="screen" id="home">
+    <div class="home-content">
+      <div class="greeting">
+        <div class="time-big" id="bigTime">--:--</div>
+        <div class="date" id="bigDate">chargement...</div>
+        <div style="font-size:11px;color:#a9c4e8;margin-top:8px" id="homeSimInfo">Carte KIZ • Numéro virtuel</div>
+        <div style="font-size:11px;color:#a9c4e8;margin-top:4px" id="homeBalances"></div>
+      </div>
+      <div class="apps-grid" id="homeApps"></div>
+    </div>
+
+    <div class="dock">
+      <div class="app-icon" onclick="launchApp('phone','phone')">
+        <div class="icon-box ic-phone">📞</div>
+      </div>
+      <div class="app-icon" onclick="openScreen('browser')">
+        <div class="icon-box ic-browser">🌐</div>
+      </div>
+      <div class="app-icon" onclick="launchApp('camera','camera')">
+        <div class="icon-box ic-camera">📷</div>
+      </div>
+      <div class="app-icon" onclick="openScreen('settings')">
+        <div class="icon-box ic-settings">⚙️</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ APP STORE ============ -->
+  <div class="screen" id="store">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <h2>🛍️ KIZ App Store</h2>
+    </div>
+<div class="screen-body">
+      <div class="store-hero">
+        <div class="store-hero-icon">🛍️</div>
+        <h3>Découvrez votre prochaine application</h3>
+        <p id="storeSubtitle">Jeux, études, multimédia et outils pour votre téléphone virtuel.</p>
+        <div class="store-hero-stats"><span>📦 <b id="storeAppCount">—</b> applications</span><span>🎮 Jeux inclus</span></div>
+      </div>
+      <div class="store-search-wrap"><span>🔎</span><input id="storeSearch" placeholder="Rechercher une application…" oninput="renderStore()"><button onclick="clearStoreSearch()" aria-label="Effacer la recherche">×</button></div>
+      <div class="store-section-title"><b>Explorer par catégorie</b><small>Choisissez une catégorie</small></div>
+      <div class="store-categories" id="storeCategories">
+        <button class="store-chip active" data-category="all" onclick="setStoreCategory('all')">✨ Tout</button>
+        <button class="store-chip" data-category="games" onclick="setStoreCategory('games')">🎮 Jeux</button>
+        <button class="store-chip" data-category="study" onclick="setStoreCategory('study')">📚 Études</button>
+        <button class="store-chip" data-category="media" onclick="setStoreCategory('media')">🎬 Multimédia</button>
+        <button class="store-chip" data-category="office" onclick="setStoreCategory('office')">📝 Bureautique</button>
+        <button class="store-chip" data-category="tools" onclick="setStoreCategory('tools')">🧰 Outils</button>
+        <button class="store-chip" data-category="business" onclick="setStoreCategory('business')">💼 Commerce</button>
+        <button class="store-chip" data-category="system" onclick="setStoreCategory('system')">⚙️ Système</button>
+      </div>
+      <div class="store-results-line"><span id="storeResultsCount">Applications disponibles</span><button onclick="setStoreCategory('all');clearStoreSearch()">Réinitialiser</button></div>
+      <div id="storeList"></div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div class="screen" id="settings">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <h2>⚙️ Paramètres</h2>
+    </div>
+    <div class="screen-body">
+
+      <div class="settings-group">
+        <div class="settings-group-title">Compte</div>
+        <div class="settings-item">
+          <div class="si-icon ic-camera">👤</div>
+          <div class="si-text">
+            <div class="si-title" id="profileName">Utilisateur</div>
+            <div class="si-sub" id="profileUser">@user</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Connexions</div>
+        <div class="settings-item">
+          <div class="si-icon ic-browser">📶</div>
+          <div class="si-text">
+            <div class="si-title">Données mobiles</div>
+            <div class="si-sub" id="subData">Désactivé - Requis pour App Store</div>
+          </div>
+          <div class="toggle" id="togData" onclick="toggleSetting('data')"></div>
+        </div>
+        <div class="settings-item">
+          <div class="si-icon ic-browser">ᛒ</div>
+          <div class="si-text">
+            <div class="si-title">Bluetooth</div>
+            <div class="si-sub" id="subBt">Désactivé</div>
+          </div>
+          <div class="toggle" id="togBt" onclick="toggleSetting('bt')"></div>
+        </div>
+        <div class="settings-item">
+          <div class="si-icon ic-browser">◉</div>
+          <div class="si-text">
+            <div class="si-title">Wi-Fi</div>
+            <div class="si-sub" id="subWifi">Désactivé</div>
+          </div>
+          <div class="toggle" id="togWifi" onclick="toggleSetting('wifi')"></div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Affichage</div>
+        <div class="settings-item">
+          <div class="si-icon ic-clock">☀️</div>
+          <div class="si-text">
+            <div class="si-title">Luminosité</div>
+            <div class="si-sub">Écran</div>
+          </div>
+          <input type="range" min="30" max="100" value="100" id="brightness"
+                 style="width:90px" oninput="setBrightness(this.value)">
+        </div>
+        <div class="settings-item">
+          <div class="si-icon ic-camera">🎨</div>
+          <div class="si-text">
+            <div class="si-title">Fond d'écran</div>
+            <div class="si-sub">Changer le fond</div>
+          </div>
+          <button class="btn-sm" onclick="changeWallpaper()">Changer</button>
+        </div>
+        <div class="settings-item">
+          <div class="si-icon ic-camera">🌙</div>
+          <div class="si-text">
+            <div class="si-title">Mode sombre</div>
+            <div class="si-sub">Thème de KIZ OS</div>
+          </div>
+          <div class="toggle on" id="togDark" onclick="toggleDarkMode()"></div>
+        </div>
+        <div class="settings-item">
+          <div class="si-icon ic-camera">🖼️</div><div class="si-text"><div class="si-title">Photo personnelle en fond</div><div class="si-sub">Choisir une image du téléphone</div></div>
+          <label class="btn-sm" for="wallpaperFile">Choisir</label><input id="wallpaperFile" type="file" accept="image/*" style="display:none" onchange="setCustomWallpaper(event)">
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Sons et démarrage</div>
+        <div class="settings-item"><div class="si-icon ic-settings">🔊</div><div class="si-text"><div class="si-title">Sons de KIZ OS</div><div class="si-sub" id="subSound">Sons activés/désactivés</div></div><div class="toggle" id="togSound" onclick="toggleKIZSound()"></div></div>
+        <div class="settings-item" onclick="restartKIZ()" style="cursor:pointer"><div class="si-icon ic-settings">🔄</div><div class="si-text"><div class="si-title">Redémarrer KIZ OS</div><div class="si-sub">Relancer l’appareil virtuel sans effacer les données</div></div><button class="btn-sm">Redémarrer</button></div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Système</div>
+        <div class="settings-item">
+          <div class="si-icon ic-settings">ℹ️</div>
+          <div class="si-text">
+            <div class="si-title">À propos</div>
+            <div class="si-sub" id="osVersionLabel">KIZ OS v1.0</div>
+          </div>
+        </div>
+        <div class="settings-item">
+          <div class="si-icon ic-settings">💾</div>
+          <div class="si-text">
+            <div class="si-title">Stockage</div>
+            <div class="si-sub" id="subStorage">--</div>
+          </div>
+        </div>
+        <div class="settings-item" onclick="adminLogin()" style="cursor:pointer">
+          <div class="si-icon ic-settings">🔐</div><div class="si-text"><div class="si-title">Administration KIZ</div><div class="si-sub">Forfaits, argent, unités et SMS virtuels</div></div><button class="btn-sm">Ouvrir</button>
+        </div>
+        <div class="settings-item" onclick="backupKIZ()" style="cursor:pointer">
+          <div class="si-icon ic-settings">💾</div><div class="si-text"><div class="si-title">Sauvegarde KIZ</div><div class="si-sub">Exporter les données de cet appareil virtuel</div></div><button class="btn-sm">Exporter</button>
+        </div>
+        <div class="settings-item" onclick="document.getElementById('restoreKIZFile').click()" style="cursor:pointer">
+          <div class="si-icon ic-settings">📂</div><div class="si-text"><div class="si-title">Restaurer une sauvegarde</div><div class="si-sub">Importer un fichier KIZ JSON</div></div><button class="btn-sm">Importer</button>
+          <input type="file" id="restoreKIZFile" accept="application/json,.json" style="display:none" onchange="restoreKIZ(event)">
+        </div>
+        <div class="settings-item">
+          <div class="si-icon ic-settings">🔄</div>
+          <div class="si-text">
+            <div class="si-title">Réinitialiser</div>
+            <div class="si-sub">Restaurer l'appareil</div>
+          </div>
+          <button class="btn-sm" onclick="resetDevice()" style="background:#ff3b5c;color:#fff">Reset</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ CALCULATOR ============ -->
+  <div class="screen" id="calc">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <h2>🧮 Calculatrice</h2>
+    </div>
+    <div class="calc-display" id="calcDisplay">0</div>
+    <div class="calc-grid" id="calcGrid"></div>
+  </div>
+
+  <!-- ============ KIZ PHONE / USSD ============ -->
+  <div class="screen" id="phoneapp">
+    <div class="screen-header"><button class="back-btn" onclick="goHome()">‹</button><h2>📞 Téléphone KIZ</h2></div>
+    <div class="screen-body">
+      <div class="card-phone">
+        <div style="font-size:12px;color:#99aabb">Carte SIM virtuelle KIZ</div>
+        <div id="kizPhoneNumber" style="font-size:17px;font-weight:700;margin:8px 0">Numéro KIZ</div>
+        <input id="ussdInput" placeholder="Ex. *100#" inputmode="text" style="width:100%;padding:13px;border-radius:12px;background:#111a31;color:#fff;border:1px solid #334155;margin:8px 0">
+        <div class="dial-grid"><button onclick="dialKey('1')">1</button><button onclick="dialKey('2')">2</button><button onclick="dialKey('3')">3</button><button onclick="dialKey('4')">4</button><button onclick="dialKey('5')">5</button><button onclick="dialKey('6')">6</button><button onclick="dialKey('7')">7</button><button onclick="dialKey('8')">8</button><button onclick="dialKey('9')">9</button><button onclick="dialKey('*')">*</button><button onclick="dialKey('0')">0</button><button onclick="dialKey('#')">#</button></div>
+        <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" onclick="runUSSD()">Exécuter le code</button><button class="btn secondary" onclick="clearUSSD()">Effacer</button></div>
+        <div id="ussdResult" style="margin-top:12px;white-space:pre-wrap;font-size:13px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ KIZ CAMERA ============ -->
+  <div class="screen" id="cameraapp">
+    <div class="screen-header"><button class="back-btn" onclick="stopCamera();goHome()">‹</button><h2>📷 Appareil photo</h2></div>
+    <div class="screen-body">
+      <video id="cameraVideo" autoplay playsinline style="width:100%;background:#000;border-radius:16px;min-height:220px"></video>
+      <canvas id="cameraCanvas" style="display:none"></canvas>
+      <button class="btn" onclick="startCamera()">Ouvrir la caméra</button>
+      <button class="btn" onclick="takePhoto()">📸 Capturer et enregistrer</button>
+      <p style="font-size:12px;color:#99aabb;margin-top:10px">L'accès à la caméra nécessite une autorisation et peut exiger HTTPS ou une application Android compatible.</p>
+    </div>
+  </div>
+
+  <!-- ============ KIZ ADMIN ============ -->
+  <div class="screen" id="kizadmin">
+    <div class="screen-header"><button class="back-btn" onclick="openScreen('settings')">‹</button><h2>🔐 Administration KIZ</h2></div>
+    <div class="screen-body" id="adminBody"></div>
+  </div>
+
+  <!-- ============ CALENDAR ============ -->
+  <div class="screen" id="calendar">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <h2>📅 Calendrier</h2>
+    </div>
+    <div class="screen-body">
+      <div class="cal-header">
+        <div class="month" id="calMonth">--</div>
+        <div class="year" id="calYear">----</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <!-- ============ CLOCK ============ -->
+  <div class="screen" id="clock">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <h2>⏰ Horloge</h2>
+    </div>
+    <div class="screen-body" style="text-align:center;display:flex;flex-direction:column;justify-content:center;">
+      <div style="font-size:64px;font-weight:200" id="clockTime">--:--</div>
+      <div style="font-size:14px;color:#8899bb;margin-top:10px" id="clockDate">--</div>
+      <div style="margin-top:28px;text-align:left">
+        <h3 style="font-size:16px;margin-bottom:10px">⏰ Alarme</h3>
+        <input type="time" id="alarmTime" style="width:100%;padding:12px;border-radius:12px;background:#111a31;color:#fff;border:1px solid #334155">
+        <button class="btn" onclick="setKIZAlarm()">Activer l’alarme</button>
+        <button class="btn secondary" onclick="cancelKIZAlarm()">Désactiver</button>
+        <div id="alarmStatus" style="font-size:12px;color:#99aabb;margin-top:8px">Aucune alarme activée.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ GALLERY ============ -->
+  <div class="screen" id="gallery">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <h2>🖼️ Galerie</h2>
+    </div>
+    <div class="screen-body">
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+  </div>
+
+  <!-- ============ FILES ============ -->
+  <div class="screen" id="files">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <h2>📁 Fichiers</h2>
+    </div>
+    <div class="screen-body">
+      <div class="tool-box" style="margin-bottom:12px">
+        <b>Ajouter des fichiers du téléphone</b>
+        <p style="font-size:12px;color:#aab8d0;margin:6px 0 10px">Choisissez les fichiers auxquels vous voulez donner accès dans KIZ OS. Le navigateur ne peut pas parcourir tout le téléphone automatiquement.</p>
+        <input type="file" id="phoneFilePicker" multiple onchange="importPhoneFiles(event)" style="width:100%;font-size:12px">
+      </div>
+      <div id="filesList"></div>
+    </div>
+  </div>
+
+  <!-- ============ PLACEHOLDER APP ============ -->
+  <div class="screen" id="appview">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <h2 id="appTitle">App</h2>
+    </div>
+    <div class="screen-body" id="appBody" style="overflow-y:auto;display:block;padding:16px">
+      <div id="appContent" style="font-size:60px;margin-bottom:16px;text-align:center">📱</div>
+      <div style="font-size:13px;color:#8899bb;text-align:center;margin-bottom:14px" id="appDesc">Application</div>
+      <div id="appToolContent"></div>
+    </div>
+  </div>
+
+  <div id="appLongPressMenu" style="display:none;position:absolute;z-index:1000;top:42px;left:10px;right:10px;gap:8px;justify-content:center;pointer-events:auto">
+    <button class="btn" style="flex:1;box-shadow:0 6px 22px #0008" onclick="showSelectedAppInfo()">ℹ️ Information</button>
+    <button id="uninstallMenuButton" class="btn secondary" style="flex:1;box-shadow:0 6px 22px #0008" onclick="uninstallSelectedApp()">🗑️ Désinstaller</button>
+  </div>
+  <div id="appInfoOverlay" style="display:none;position:absolute;inset:0;z-index:1001;background:#0009;align-items:center;justify-content:center;padding:24px">
+    <div style="background:#17233d;border:1px solid #405174;border-radius:18px;padding:18px;width:100%;max-width:320px;color:white"><h3 id="appInfoTitle">Application</h3><p id="appInfoText" style="font-size:13px;line-height:1.5;margin:12px 0"></p><button class="btn" onclick="closeAppInfo()">Fermer</button></div>
+  </div>
+  <!-- DISABLED OVERLAY -->
+  <div class="disabled-overlay" id="dataOverlay">
+    <div class="do-icon">📶</div>
+    <h3>Données mobiles désactivées</h3>
+    <p>Activez les données mobiles dans les Paramètres pour utiliser l'App Store et télécharger des applications.</p>
+    <button class="btn" onclick="openScreen('settings'); closeOverlay()">Ouvrir les Paramètres</button>
+    <button class="btn secondary" onclick="closeOverlay()" style="margin-top:8px">Plus tard</button>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ================= STATE ================= */
+const state = {
+  setupDone: false,
+  user: { name: '', username: '', number: '' },
+  data: false, bt: false, wifi: false,
+  brightness: 100, wallpaper: 0, sound: true, installedApps: [],
+  calcDisplay: '0', calcExpr: '',
+  balance: 0, units: 0, sms: 0, megabytes: 0,
+  plans: [], photos: [], messages: [], transactions: [], appData: {}, phoneFiles: [], virtualDocs: [],
+  osVersion: '1.0', osLastUpdate: 0, hiddenAppsUnlocked: false,
+  welcomeGiven: false, language: 'fr', region: 'RDC - Congo'
+};
+
+const WALLPAPERS = [
+  'radial-gradient(circle at 20% 10%, rgba(79,172,254,0.25), transparent 50%), radial-gradient(circle at 80% 80%, rgba(67,233,123,0.18), transparent 50%), linear-gradient(160deg, #0f1a3a, #1a1a2e)',
+  'radial-gradient(circle at 80% 20%, rgba(244,114,182,0.3), transparent 55%), radial-gradient(circle at 20% 80%, rgba(139,92,246,0.25), transparent 55%), linear-gradient(160deg, #1a0a2e, #2e0a1a)',
+  'radial-gradient(circle at 30% 30%, rgba(251,191,36,0.25), transparent 55%), linear-gradient(160deg, #1a1a0a, #2e1a0a)',
+  'radial-gradient(circle at 50% 20%, rgba(67,233,123,0.25), transparent 55%), linear-gradient(160deg, #0a1a0f, #1a2e1a)'
+];
+
+/* ================= STORE APPS ================= */
+const STORE_APPS = [
+  {id:'notes',name:'Notes KIZ',desc:'Créer et conserver des notes hors ligne',icon:'📝',color:'linear-gradient(135deg,#fde047,#eab308)'},
+  {id:'plans-kiz',name:'Mes forfaits KIZ',desc:'Consulter le solde Internet, voir les prix et acheter des forfaits virtuels',icon:'📶',color:'linear-gradient(135deg,#06b6d4,#2563eb)',sizeMB:8,category:'system'},
+  {id:'ussd-guide',name:'Guide USSD KIZ',desc:'Découvrir les codes USSD et consulter son numéro KIZ',icon:'📟',color:'linear-gradient(135deg,#38bdf8,#0369a1)',sizeMB:12,category:'system'},
+  {id:'word-counter',name:'Compteur de mots',desc:'Compter les mots, caractères et lignes d’un texte',icon:'🔢',color:'linear-gradient(135deg,#60a5fa,#2563eb)',sizeMB:8,category:'tools'},
+  {id:'password-generator',name:'Générateur de mots de passe',desc:'Créer un mot de passe aléatoire hors ligne',icon:'🔐',color:'linear-gradient(135deg,#818cf8,#4338ca)',sizeMB:10,category:'tools'},
+  {id:'quick-draw',name:'Croquis rapide',desc:'Dessiner une idée et exporter le dessin',icon:'✏️',color:'linear-gradient(135deg,#fb7185,#be123c)',sizeMB:18,category:'creative'},
+  {id:'weather',name:'Météo',desc:'Météo locale de démonstration hors ligne',icon:'⛅',color:'linear-gradient(135deg,#38bdf8,#0284c7)'},
+  {id:'music',name:'Musique KIZ',desc:'Lecteur de fichiers audio choisis sur le téléphone',icon:'🎵',color:'linear-gradient(135deg,#a78bfa,#7c3aed)'},
+  {id:'chat',name:'Messages KIZ',desc:'Messages virtuels locaux',icon:'💬',color:'linear-gradient(135deg,#4ade80,#16a34a)'},
+  {id:'bank',name:'KIZ Money',desc:'Solde et historique de monnaie virtuelle',icon:'💳',color:'linear-gradient(135deg,#4facfe,#0066ff)'},
+  {id:'games',name:'Jeux KIZ',desc:'Mini-jeux hors ligne',icon:'🎮',color:'linear-gradient(135deg,#fb923c,#ea580c)'},
+  {id:'match',name:'Matchs KIZ',desc:'Matchs fictifs et points virtuels',icon:'⚽',color:'linear-gradient(135deg,#34d399,#059669)'},
+  {id:'mail',name:'Courriel',desc:'Carnet de brouillons hors ligne',icon:'✉️',color:'linear-gradient(135deg,#60a5fa,#2563eb)'},
+  {id:'reader',name:'Lecteur de documents',desc:'Ouvrir des fichiers compatibles',icon:'📄',color:'linear-gradient(135deg,#94a3b8,#475569)'},
+  {id:'translator',name:'Traducteur',desc:'Outil de traduction à compléter',icon:'🌍',color:'linear-gradient(135deg,#34d399,#059669)'},
+  {id:'dictionary',name:'Dictionnaire',desc:'Dictionnaire français-anglais hors ligne de plus de 300 mots',icon:'📚',color:'linear-gradient(135deg,#fbbf24,#d97706)'},
+  {id:'stopwatch',name:'Chronomètre',desc:'Chronomètre local',icon:'⏱️',color:'linear-gradient(135deg,#facc15,#ca8a04)'},
+  {id:'timer',name:'Minuteur',desc:'Minuteur local',icon:'⌛',color:'linear-gradient(135deg,#f87171,#dc2626)'},
+  {id:'recorder',name:'Enregistreur',desc:'Enregistrement audio selon les autorisations',icon:'🎙️',color:'linear-gradient(135deg,#a78bfa,#7c3aed)'},
+  {id:'contacts',name:'Contacts KIZ',desc:'Répertoire virtuel local',icon:'👥',color:'linear-gradient(135deg,#38bdf8,#0284c7)'},
+  {id:'downloads',name:'Téléchargements',desc:'Liste des fichiers téléchargés par KIZ',icon:'📥',color:'linear-gradient(135deg,#fbbf24,#f59e0b)'},
+  {id:'security',name:'Sécurité KIZ',desc:'Conseils et options de protection',icon:'🛡️',color:'linear-gradient(135deg,#64748b,#334155)'},
+  {id:'backup',name:'Sauvegarde',desc:'Exporter ou restaurer les données KIZ',icon:'💾',color:'linear-gradient(135deg,#4facfe,#0066ff)'},
+  {id:'calculator-scientific',name:'Calculatrice scientifique',desc:'Outils mathématiques supplémentaires',icon:'🔬',color:'linear-gradient(135deg,#fbbf24,#d97706)'},
+  {id:'browser-tools',name:'Outils Internet',desc:'Ouvrir une page web si la connexion est disponible',icon:'🌐',color:'linear-gradient(135deg,#38bdf8,#0284c7)' },
+  {id:'calendar-tools',name:'Agenda',desc:'Notes de calendrier locales',icon:'📆',color:'linear-gradient(135deg,#f87171,#dc2626)' },
+  {id:'gallery-tools',name:'Albums photos',desc:'Organiser les photos de KIZ',icon:'🌄',color:'linear-gradient(135deg,#f472b6,#db2777)' },
+  {id:'file-tools',name:'Gestionnaire de fichiers',desc:'Afficher les fichiers virtuels',icon:'📁',color:'linear-gradient(135deg,#fbbf24,#f59e0b)' },
+  {id:'currency',name:'Convertisseur',desc:'Convertisseur de valeurs manuel hors ligne',icon:'💱',color:'linear-gradient(135deg,#4ade80,#16a34a)' },
+  {id:'calculator-budget',name:'Budget KIZ',desc:'Calculer recettes et dépenses virtuelles',icon:'📊',color:'linear-gradient(135deg,#60a5fa,#2563eb)' },
+  {id:'flashlight',name:'Lampe',desc:'L’accès à la lampe réelle dépend d’une intégration Android',icon:'🔦',color:'linear-gradient(135deg,#facc15,#ca8a04)' },
+  {id:'clock-widget',name:'Horloge mondiale',desc:'Afficher l’heure de différentes régions',icon:'🌐',color:'linear-gradient(135deg,#a78bfa,#7c3aed)' },
+  {id:'voice',name:'Assistant vocal',desc:'Fonctions vocales selon le navigateur',icon:'🎤',color:'linear-gradient(135deg,#38bdf8,#0284c7)' },
+  {id:'paint',name:'Dessin KIZ',desc:'Petit espace de dessin',icon:'🎨',color:'linear-gradient(135deg,#f472b6,#db2777)' },
+  {id:'about',name:'À propos de KIZ OS',desc:'Informations sur ce système virtuel',icon:'ℹ️',color:'linear-gradient(135deg,#94a3b8,#475569)' },
+  {id:"video-player",name:"Lecteur vidéo KIZ",desc:"Lire des vidéos MP4, WebM et autres formats du navigateur",icon:"🎬",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:80,category:"media"},
+  {id:"audio-player",name:"Lecteur audio KIZ",desc:"Écouter des fichiers audio locaux",icon:"🎧",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:128,category:"media"},
+  {id:"mp4-mp3",name:"Convertisseur MP4 vers audio",desc:"Extraire la piste audio d’une vidéo et exporter en WAV lorsque le navigateur le permet",icon:"🔄",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:48,category:"media"},
+  {id:"mini-word",name:"Mini Word",desc:"Rédiger et exporter des documents texte ou HTML",icon:"📝",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:160,category:"office"},
+  {id:"mini-excel",name:"Mini Excel",desc:"Créer un tableau, calculer des sommes et exporter en CSV",icon:"📊",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:160,category:"office"},
+  {id:"html-editor",name:"Éditeur HTML",desc:"Écrire, prévisualiser et enregistrer du HTML",icon:"💻",color:"linear-gradient(135deg,#34d399,#047857)",sizeMB:32,category:"code"},
+  {id:"python-editor",name:"Éditeur Python",desc:"Écrire et télécharger des scripts Python .py",icon:"🐍",color:"linear-gradient(135deg,#34d399,#047857)",sizeMB:96,category:"code"},
+  {id:"pdf-reader",name:"Lecteur PDF",desc:"Ouvrir un fichier PDF compatible dans le navigateur",icon:"📕",color:"linear-gradient(135deg,#fbbf24,#d97706)",sizeMB:256,category:"files"},
+  {id:"text-editor",name:"Éditeur de texte",desc:"Créer et enregistrer des fichiers TXT",icon:"📃",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:160,category:"office"},
+  {id:"slides",name:"Mini Présentation",desc:"Préparer des diapositives simples en texte",icon:"📽️",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:80,category:"office"},
+  {id:"archive-manager",name:"Gestionnaire ZIP",desc:"Sélectionner des archives ZIP et voir les limites du navigateur",icon:"🗜️",color:"linear-gradient(135deg,#fbbf24,#d97706)",sizeMB:128,category:"files"},
+  {id:"qr-maker",name:"Créateur QR",desc:"Créer un code QR textuel si la bibliothèque locale est disponible",icon:"▦",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:256,category:"tools"},
+  {id:"password-vault",name:"Coffre de mots de passe",desc:"Gérer des notes privées locales sur cet appareil",icon:"🔐",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:52,category:"tools"},
+  {id:"todo",name:"Liste des tâches",desc:"Créer et cocher des tâches",icon:"☑️",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:128,category:"office"},
+  {id:"habit-tracker",name:"Suivi des habitudes",desc:"Suivre des habitudes quotidiennes",icon:"🌱",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:128,category:"office"},
+  {id:"calculator-tip",name:"Calculateur de pourboire",desc:"Partager une addition et calculer un pourboire",icon:"🧾",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:420,category:"tools"},
+  {id:"loan-calc",name:"Calculateur de prêt",desc:"Estimer une mensualité à taux fourni",icon:"🏦",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:72,category:"tools"},
+  {id:"unit-converter",name:"Convertisseur d’unités",desc:"Convertir longueur, masse et température",icon:"📐",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:72,category:"tools"},
+  {id:"date-calc",name:"Calculateur de dates",desc:"Calculer un intervalle entre deux dates",icon:"📆",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:110,category:"tools"},
+  {id:"stopwatch-pro",name:"Chronomètre Pro",desc:"Mesurer des durées et tours",icon:"⏱️",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:96,category:"tools"},
+  {id:"pomodoro",name:"Minuteur Pomodoro",desc:"Organiser les sessions de concentration",icon:"🍅",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:85,category:"tools"},
+  {id:"flashcards",name:"Cartes mémoire",desc:"Créer des cartes de révision",icon:"🗂️",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:32,category:"study"},
+  {id:"quiz-maker",name:"Quiz KIZ",desc:"Créer un quiz simple",icon:"❓",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:24,category:"study"},
+  {id:"english-words",name:"Anglais quotidien",desc:"Réviser des mots anglais de base",icon:"🇬🇧",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:145,category:"study"},
+  {id:"french-words",name:"Français pratique",desc:"Réviser orthographe et vocabulaire",icon:"🇫🇷",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:24,category:"study"},
+  {id:"math-trainer",name:"Entraînement maths",desc:"S’exercer aux opérations",icon:"➗",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:45,category:"study"},
+  {id:"physics-notes",name:"Notes de physique",desc:"Consigner des formules de physique",icon:"⚛️",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:85,category:"study"},
+  {id:"chemistry-notes",name:"Notes de chimie",desc:"Consigner des formules de chimie",icon:"🧪",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:256,category:"study"},
+  {id:"biology-guide",name:"Guide de biologie",desc:"Fiches de révision en biologie",icon:"🧬",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:52,category:"study"},
+  {id:"history-notes",name:"Histoire",desc:"Créer des fiches historiques",icon:"🏛️",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:45,category:"study"},
+  {id:"geography-guide",name:"Géographie",desc:"Fiches de géographie",icon:"🌍",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:72,category:"study"},
+  {id:"dictionary-fr",name:"Dictionnaire français",desc:"Rechercher dans un mini dictionnaire hors ligne",icon:"📚",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:32,category:"study"},
+  {id:"dictionary-en",name:"Dictionnaire anglais",desc:"Chercher des mots anglais courants",icon:"📘",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:110,category:"study"},
+  {id:"translator-fr-en",name:"Traducteur FR-EN",desc:"Traduire des expressions intégrées hors ligne",icon:"🔤",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:64,category:"study"},
+  {id:"calculator-science2",name:"Calculatrice avancée",desc:"Outils et calculs mathématiques",icon:"🧮",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:768,category:"tools"},
+  {id:"expense-book",name:"Cahier de dépenses",desc:"Enregistrer les dépenses personnelles",icon:"💸",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:420,category:"business"},
+  {id:"sales-book",name:"Cahier des ventes",desc:"Noter des ventes et recettes",icon:"🧾",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:24,category:"business"},
+  {id:"stock-manager",name:"Gestionnaire de stock",desc:"Suivre quantités et seuils de stock",icon:"📦",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:320,category:"business"},
+  {id:"invoice-maker",name:"Créateur de factures",desc:"Préparer une facture imprimable",icon:"🧾",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:85,category:"business"},
+  {id:"profit-calc",name:"Calcul bénéfice",desc:"Calculer marge et bénéfice net",icon:"📈",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:96,category:"business"},
+  {id:"budget-family",name:"Budget familial",desc:"Planifier recettes et dépenses",icon:"🏠",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:180,category:"business"},
+  {id:"currency-cdf",name:"Convertisseur CDF",desc:"Convertir des montants avec un taux manuel",icon:"🇨🇩",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:24,category:"business"},
+  {id:"currency-usd",name:"Convertisseur USD",desc:"Calculer des montants en dollars avec taux manuel",icon:"💵",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:24,category:"business"},
+  {id:"currency-zmw",name:"Convertisseur ZMW",desc:"Calculer des montants en kwacha avec taux manuel",icon:"💱",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:128,category:"business"},
+  {id:"receipt-book",name:"Carnet de reçus",desc:"Créer un reçu texte",icon:"🧾",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:58,category:"business"},
+  {id:"client-book",name:"Carnet clients",desc:"Enregistrer des clients virtuels",icon:"👥",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:32,category:"business"},
+  {id:"supplier-book",name:"Carnet fournisseurs",desc:"Enregistrer des fournisseurs",icon:"🚚",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:220,category:"business"},
+  {id:"business-plan",name:"Planificateur business",desc:"Organiser un petit projet commercial",icon:"🏪",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:220,category:"business"},
+  {id:"invoice-list",name:"Suivi factures",desc:"Suivre factures payées et impayées",icon:"📑",color:"linear-gradient(135deg,#4ade80,#15803d)",sizeMB:640,category:"business"},
+  {id:"music-playlist",name:"Listes musicales",desc:"Créer une liste de fichiers audio",icon:"🎶",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:64,category:"media"},
+  {id:"video-library",name:"Bibliothèque vidéo",desc:"Sélectionner et lire des vidéos locales",icon:"📺",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:48,category:"media"},
+  {id:"photo-editor",name:"Éditeur photo simple",desc:"Prévisualiser et télécharger une image choisie",icon:"🖼️",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:320,category:"media"},
+  {id:"image-resizer",name:"Redimensionneur image",desc:"Changer les dimensions d’une image dans le navigateur",icon:"📐",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:160,category:"media"},
+  {id:"color-picker",name:"Palette de couleurs",desc:"Choisir et copier une couleur",icon:"🎨",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:900,category:"tools"},
+  {id:"wallpaper-studio",name:"Studio fond d’écran",desc:"Choisir une couleur ou un dégradé de fond",icon:"🌈",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:900,category:"tools"},
+  {id:"voice-notes",name:"Notes vocales",desc:"Enregistrer un court audio si autorisé",icon:"🎙️",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:48,category:"media"},
+  {id:"soundboard",name:"Boîte à sons",desc:"Jouer des sons de démonstration",icon:"🔊",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:450,category:"media"},
+  {id:"radio-offline",name:"Radio locale",desc:"Lire un fichier audio local comme une radio personnelle",icon:"📻",color:"linear-gradient(135deg,#a78bfa,#7c3aed)",sizeMB:220,category:"media"},
+  {id:'vlc-mini',name:'VLC-mini',desc:'Lecteur multimédia local pour vidéos et musiques choisies sur le téléphone',icon:'🎬',color:'linear-gradient(135deg,#fb923c,#dc2626)',sizeMB:72,category:'media'},
+  {id:"game-snake",name:"Jeu Snake",desc:"Mini-jeu de serpent",icon:"🐍",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:90,category:"games"},
+  {id:"game-memory",name:"Jeu de mémoire",desc:"Retrouver les paires",icon:"🧠",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:55,category:"games"},
+  {id:"game-tictactoe",name:"Morpion",desc:"Jouer au morpion contre un adversaire simple",icon:"❎",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:35,category:"games"},
+  {id:"game-2048",name:"Jeu 2048",desc:"Fusionner les nombres",icon:"🔢",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:512,category:"games"},
+  {id:"game-quiz",name:"Quiz rapide",desc:"Répondre à des questions de culture générale",icon:"🧠",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:55,category:"games"},
+  {id:"game-reaction",name:"Test de réflexes",desc:"Tester son temps de réaction",icon:"⚡",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:90,category:"games"},
+  {id:"game-math",name:"Défi calcul",desc:"Répondre à des calculs chronométrés",icon:"➕",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:145,category:"games"},
+  {id:"game-word",name:"Mots mélangés",desc:"Retrouver un mot à partir de lettres mélangées",icon:"🔠",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:48,category:"games"},
+  {id:"game-puzzle",name:"Puzzle logique",desc:"Résoudre de petits défis logiques",icon:"🧩",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:72,category:"games"},
+  {id:"game-dice",name:"Dés virtuels",desc:"Lancer des dés virtuels",icon:"🎲",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:55,category:"games"},
+  {id:"game-coin",name:"Pile ou face",desc:"Jeu de hasard sans argent réel",icon:"🪙",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:72,category:"games"},
+  {id:"game-chess-notes",name:"Échecs : carnet",desc:"Noter des parties d’échecs",icon:"♟️",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:240,category:"games"},
+  {id:"game-checkers",name:"Dames",desc:"Petit plateau de dames de démonstration",icon:"🔴",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:55,category:"games"},
+  {id:"game-tap",name:"Tap Challenge",desc:"Cliquer le plus vite possible",icon:"👆",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:400,category:"games"},
+  {id:"game-color",name:"Mémoire des couleurs",desc:"Mémoriser une séquence de couleurs",icon:"🟣",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:400,category:"games"},
+  {id:"game-rps",name:"Pierre-feuille-ciseaux",desc:"Jouer contre l’ordinateur",icon:"✊",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:240,category:"games"},
+  {id:"game-number",name:"Devine le nombre",desc:"Trouver un nombre secret",icon:"🎯",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:90,category:"games"},
+  {id:"game-trivia",name:"Culture générale",desc:"Répondre à des questions de connaissances",icon:"🌟",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:55,category:"games"},
+  {id:"game-wordsearch",name:"Mots à retrouver",desc:"Chercher des mots dans une grille simple",icon:"🔎",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:512,category:"games"},
+  {id:"game-runner",name:"Course infinie simple",desc:"Jeu de réflexes simplifié",icon:"🏃",color:"linear-gradient(135deg,#fb923c,#c2410c)",sizeMB:400,category:"games"},
+  {id:"journal",name:"Journal personnel",desc:"Écrire un journal local",icon:"📔",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:160,category:"office"},
+  {id:"recipe-book",name:"Carnet de recettes",desc:"Conserver des recettes",icon:"🍲",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:160,category:"office"},
+  {id:"shopping-list",name:"Liste de courses",desc:"Préparer des listes de courses",icon:"🛒",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:32,category:"office"},
+  {id:"travel-planner",name:"Planificateur voyage",desc:"Préparer un itinéraire hors ligne",icon:"🧳",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:160,category:"office"},
+  {id:"expense-split",name:"Partage des frais",desc:"Répartir une dépense entre plusieurs personnes",icon:"🤝",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:220,category:"tools"},
+  {id:"first-aid",name:"Mémo premiers secours",desc:"Consulter des rappels généraux de sécurité",icon:"🩹",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:64,category:"study"},
+  {id:"plant-care",name:"Carnet jardin",desc:"Suivre l’entretien des plantes",icon:"🪴",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:80,category:"office"},
+  {id:"pet-care",name:"Carnet animaux",desc:"Noter les soins d’un animal",icon:"🐾",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:128,category:"office"},
+  {id:"fitness-log",name:"Journal sport",desc:"Noter des activités physiques sans objectifs extrêmes",icon:"🏃",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:45,category:"office"},
+  {id:"sleep-log",name:"Journal de sommeil",desc:"Consigner ses heures de repos",icon:"🌙",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:80,category:"office"},
+  {id:"water-reminder",name:"Rappel hydratation",desc:"Configurer des rappels pendant l’utilisation",icon:"💧",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:72,category:"tools"},
+  {id:"world-clock",name:"Horloge mondiale",desc:"Voir les heures de quelques villes",icon:"🕰️",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:128,category:"tools"},
+  {id:"calendar-agenda",name:"Agenda avancé",desc:"Créer des événements locaux",icon:"🗓️",color:"linear-gradient(135deg,#60a5fa,#2563eb)",sizeMB:80,category:"office"},
+  {id:"contact-backup",name:"Sauvegarde contacts",desc:"Exporter le carnet de contacts virtuels",icon:"📇",color:"linear-gradient(135deg,#fbbf24,#d97706)",sizeMB:640,category:"files"},
+  {id:"text-to-speech",name:"Lecture de texte",desc:"Lire un texte si la synthèse vocale est disponible",icon:"🗣️",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:72,category:"tools"},
+  {id:"speech-notes",name:"Dictée vocale",desc:"Dicter du texte si la reconnaissance vocale est disponible",icon:"🎤",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:320,category:"tools"},
+  {id:"html-preview",name:"Aperçu HTML",desc:"Prévisualiser un document HTML local",icon:"🌐",color:"linear-gradient(135deg,#34d399,#047857)",sizeMB:96,category:"code"},
+  {id:"json-editor",name:"Éditeur JSON",desc:"Écrire et valider un JSON simple",icon:"{}",color:"linear-gradient(135deg,#34d399,#047857)",sizeMB:640,category:"code"},
+  {id:"code-notes",name:"Carnet de code",desc:"Conserver des extraits de code",icon:"👨‍💻",color:"linear-gradient(135deg,#34d399,#047857)",sizeMB:85,category:"code"},
+  {id:"unit-planner",name:"Planificateur de cours",desc:"Organiser les leçons et devoirs",icon:"🎓",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:38,category:"study"},
+  {id:"grade-book",name:"Carnet de notes scolaires",desc:"Calculer une moyenne de notes",icon:"📒",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:58,category:"study"},
+  {id:"attendance",name:"Présences",desc:"Noter les présences d’un groupe",icon:"🧑‍🎓",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:64,category:"study"},
+  {id:"exam-timer",name:"Minuteur examen",desc:"Gérer un compte à rebours de révision",icon:"⏳",color:"linear-gradient(135deg,#f472b6,#be185d)",sizeMB:256,category:"study"},
+  {id:"file-converter",name:"Convertisseur de texte",desc:"Convertir texte entre TXT, HTML et JSON",icon:"🔁",color:"linear-gradient(135deg,#fbbf24,#d97706)",sizeMB:320,category:"files"},
+  {id:"download-center",name:"Centre de téléchargements",desc:"Créer et retrouver des fichiers exportés",icon:"📥",color:"linear-gradient(135deg,#fbbf24,#d97706)",sizeMB:768,category:"files"},
+  {id:"privacy-check",name:"Confidentialité KIZ",desc:"Conseils pour protéger les données locales",icon:"🛡️",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:900,category:"tools"},
+  {id:"system-info",name:"Infos appareil virtuel",desc:"Consulter les capacités simulées de KIZ OS",icon:"📱",color:"linear-gradient(135deg,#38bdf8,#0284c7)",sizeMB:18,category:"tools"},
+  {id:"kiz-history",name:"Histoire de KIZ OS",desc:"Découvrir le nom, le créateur, le fonctionnement et l’administration",icon:"📖",color:"linear-gradient(135deg,#0ea5e9,#4f46e5)",sizeMB:18,category:"system"},
+];
+
+// Tailles virtuelles propres à chaque application du catalogue (Mo).
+STORE_APPS.forEach((app,i)=>{ if(!app.sizeMB){ app.sizeMB=[22,35,48,56,64,75,90,110,128,160,220,300][i%12]; } if(!app.category){ app.category=['office','tools','media','study','business','games'][i%6]; } });
+
+/* ================= BASE APPS ================= */
+function getBaseApps() {
+  return [
+    { id:'phone', name:'Téléphone', icon:'📞', cls:'ic-phone', screen:'phone' },
+    { id:'calc', name:'Calculatrice', icon:'🧮', cls:'ic-calc', screen:'calc' },
+    { id:'calendar', name:'Calendrier', icon:'📅', cls:'ic-cal', screen:'calendar' },
+    { id:'clock', name:'Horloge', icon:'⏰', cls:'ic-clock', screen:'clock' },
+    { id:'store', name:'KIZ App Store', icon:'🛍️', cls:'ic-store', screen:'store' },
+    { id:'camera', name:'Appareil photo', icon:'📷', cls:'ic-camera', screen:'camera' },
+    { id:'gallery', name:'Galerie', icon:'🖼️', cls:'ic-gallery', screen:'gallery' },
+    { id:'browser', name:'Navigateur', icon:'🌐', cls:'ic-browser', screen:'browser' },
+    { id:'files', name:'Fichiers', icon:'📁', cls:'ic-files', screen:'files' },
+    { id:'settings', name:'Paramètres', icon:'⚙️', cls:'ic-settings', screen:'settings' }
+  ];
+}
+
+
+/* ================= PERSISTENCE ================= */
+function save() {
+  try { localStorage.setItem('kizOS', JSON.stringify(state)); } catch(e){}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem('kizOS');
+    if (raw) {
+      const s = JSON.parse(raw);
+      Object.assign(state, s);
+      if (!state.appData) state.appData = {};
+    }
+  } catch(e){}
+}
+
+/* ================= SETUP FLOW ================= */
+function nextStep(n) {
+  document.querySelectorAll('.setup-step').forEach(el => el.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+}
+
+function generateKIZNumber() {
+  const prefix = ['70','79','77'][Math.floor(Math.random()*3)];
+  const used = new Set([state.user.number].filter(Boolean));
+  let number = '';
+  for (let i=0;i<500;i++) {
+    number = prefix + String(Math.floor(Math.random()*1000000)).padStart(6,'0');
+    if (!used.has(number)) break;
+  }
+  return number;
+}
+function validateAccount() {
+  const name = document.getElementById('setupName').value.trim();
+  if (!name) { showToast('⚠️ Entrez votre nom'); return; }
+  state.user.name = name;
+  state.user.username = name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20) || 'kizuser';
+  state.user.number = generateKIZNumber();
+  state.balance = 0; state.units = 0; state.sms = 0;
+  state.megabytes = 2048; state.welcomeGiven = true;
+  state.language = document.getElementById('setupLang').value;
+  state.region = document.getElementById('setupRegion').value;
+  nextStep(4);
+}
+function finishSetup() {
+  state.setupDone = true;
+  save();
+  document.getElementById('setup').classList.remove('active');
+  document.getElementById('statusbar').style.display = 'flex';
+  showHome();
+  showToast('Bienvenue ' + state.user.name + ' !');
+}
+
+/* ================= HOME ================= */
+function showHome() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('home').classList.add('active');
+  applyWallpaper();
+  renderHomeApps();
+  updateClock();
+  updateHomeResources();
+}
+
+function goHome() {
+  stopSnakeGame();
+  stopCamera();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('home').classList.add('active');
+  applyWallpaper();
+  renderHomeApps();
+  updateClock();
+  updateHomeResources();
+}
+
+function updateHomeResources(){
+  const a=document.getElementById("homeSimInfo"); const b=document.getElementById("homeBalances");
+  if(a)a.textContent="Carte SIM KIZ • numéro masqué";
+  if(b)b.textContent="";
+}
+
+function renderHomeApps() {
+  const grid = document.getElementById('homeApps');
+  let apps = getBaseApps();
+
+  // Add installed apps
+  const workingGameIds = new Set(['game-snake','game-memory','game-tictactoe','game-2048','game-quiz','game-math','game-word','game-puzzle']);
+  state.installedApps.forEach(id => {
+    const app = STORE_APPS.find(a => a.id === id);
+    if (app && (app.category !== 'games' || workingGameIds.has(app.id))) {
+      apps.push({
+        id: app.id,
+        name: app.name,
+        icon: app.icon,
+        cls: '',
+        screen: 'appview',
+        customColor: app.color,
+        customDesc: app.desc
+      });
+    }
+  });
+
+  // Afficher les applications du bureau dans l'ordre alphabétique A → Z.
+  apps.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fr', {sensitivity: 'base'}));
+
+  grid.innerHTML = apps.map(a => {
+    let style = '';
+    if (a.customColor) style = `style="background:${a.customColor}"`;
+    return `<div class="app-icon" data-app-id="${a.id}" data-app-screen="${a.screen}" oncontextmenu="event.preventDefault();showAppLongPress('${a.id}','${a.screen}')" ontouchstart="startAppLongPress(event,'${a.id}','${a.screen}')" ontouchend="endAppLongPress(event)" ontouchmove="cancelAppLongPress()" onmousedown="startAppLongPress(event,'${a.id}','${a.screen}')" onmouseup="endAppLongPress(event)" onmouseleave="cancelAppLongPress()" onclick="handleAppIconClick(event,'${a.id}','${a.screen}')">
+      <div class="icon-box ${a.cls || ''}" ${style}>${a.icon}</div>
+      <div class="label">${a.name}</div>
+    </div>`;
+  }).join('');
+}
+
+let appLongPressTimer=null, appLongPressTriggered=false, selectedAppForMenu=null;
+function startAppLongPress(ev,id,screen){
+  if(ev.type==='mousedown' && ev.button!==0)return;
+  appLongPressTriggered=false; clearTimeout(appLongPressTimer);
+  appLongPressTimer=setTimeout(()=>{appLongPressTriggered=true;showAppLongPress(id,screen);},560);
+}
+function endAppLongPress(ev){clearTimeout(appLongPressTimer);}
+function cancelAppLongPress(){clearTimeout(appLongPressTimer);}
+function handleAppIconClick(ev,id,screen){if(appLongPressTriggered){ev.preventDefault();ev.stopPropagation();appLongPressTriggered=false;return;}launchApp(id,screen);}
+function showAppLongPress(id,screen){
+  clearTimeout(appLongPressTimer);selectedAppForMenu={id,screen};
+  const menu=document.getElementById('appLongPressMenu');if(!menu)return;
+  const fixed=getBaseApps().some(a=>a.id===id);
+  const installed=state.installedApps.includes(id);
+  const b=document.getElementById('uninstallMenuButton');b.style.display=(!fixed&&installed)?'block':'none';
+  menu.style.display='flex';
+}
+function hideAppLongPress(){const m=document.getElementById('appLongPressMenu');if(m)m.style.display='none';}
+function showSelectedAppInfo(){if(!selectedAppForMenu)return;const {id}=selectedAppForMenu;const app=STORE_APPS.find(a=>a.id===id)||getBaseApps().find(a=>a.id===id);if(!app)return;hideAppLongPress();document.getElementById('appInfoTitle').textContent=(app.icon||'📱')+' '+app.name;document.getElementById('appInfoText').textContent=(app.desc||'Application système KIZ OS')+'\n\n'+(getBaseApps().some(a=>a.id===id)?'Application intégrée : elle ne peut pas être désinstallée.':'Stockage virtuel : '+formatVirtualMB(app.sizeMB||0)+'. '+(state.installedApps.includes(id)?'Application installée.':'Application non installée.'));document.getElementById('appInfoOverlay').style.display='flex';}
+function closeAppInfo(){document.getElementById('appInfoOverlay').style.display='none';}
+function uninstallSelectedApp(){if(!selectedAppForMenu)return;const id=selectedAppForMenu.id;if(getBaseApps().some(a=>a.id===id)){showToast('Cette application système ne peut pas être désinstallée.');hideAppLongPress();return;}if(!state.installedApps.includes(id)){showToast('Cette application n’est pas installée.');hideAppLongPress();return;}const app=STORE_APPS.find(a=>a.id===id);if(!confirm('Désinstaller '+(app?app.name:'cette application')+' ?'))return;state.installedApps=state.installedApps.filter(x=>x!==id);save();hideAppLongPress();renderHomeApps();showToast('Application désinstallée.');}
+function launchApp(id, screen) {
+  if (screen === 'store') {
+    if (!state.data && !state.wifi) {
+      document.getElementById('dataOverlay').classList.add('show');
+      return;
+    }
+    openScreen('store');
+    renderStore();
+    return;
+  }
+  if (screen === 'appview') {
+    const app = STORE_APPS.find(a => a.id === id);
+    if (app) {
+      document.getElementById('appTitle').textContent = app.name;
+      document.getElementById('appContent').textContent = app.icon;
+      document.getElementById('appContent').style.color = '';
+      document.getElementById('appDesc').textContent = app.desc + ' • Stockage : ' + formatVirtualMB(app.sizeMB||50);
+      openScreen('appview');
+      renderStoreApp(app);
+    }
+    return;
+  }
+  if (screen === 'phone') { openScreen('phoneapp'); renderPhone(); return; }
+  if (screen === 'camera') { openScreen('cameraapp'); return; }
+  if (screen === 'browser') {
+    // basic placeholder
+    document.getElementById('appTitle').textContent = id.charAt(0).toUpperCase() + id.slice(1);
+    document.getElementById('appContent').textContent = screen === 'phone' ? '📞' : screen === 'browser' ? '🌐' : '📷';
+    document.getElementById('appDesc').textContent = 'Application KIZ OS';
+    openScreen('appview'); document.getElementById('appToolContent').innerHTML='<div class="app-tool"><div class="tool-box">Navigateur : saisissez une adresse web (une connexion réelle peut être nécessaire).</div><input id="browserAddress" placeholder="https://example.com"><button class="btn" onclick="openBrowserAddress()">Ouvrir</button></div>'; 
+    return;
+  }
+  openScreen(screen);
+  if (screen === 'calc') renderCalc();
+  if (screen === 'calendar') renderCalendar();
+  if (screen === 'settings') renderSettings();
+  if (screen === 'gallery') renderRealGallery();
+  if (screen === 'files') renderFiles();
+  if (screen === 'clock') updateClockScreen();
+  if (screen === 'phone') renderPhone();
+  if (screen === 'camera') stopCamera();
+}
+
+function openScreen(id) {
+  if(id!=='appview') stopSnakeGame();
+  hideAppLongPress();
+  if(id!=='cameraapp') stopCamera();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  updateClockScreen();
+}
+
+function closeOverlay() {
+  document.getElementById('dataOverlay').classList.remove('show');
+}
+
+/* ================= CLOCK ================= */
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('bigTime').textContent = hh + ':' + mm;
+  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  document.getElementById('bigDate').textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  document.getElementById('statusTime').textContent = hh + ':' + mm;
+}
+function updateClockScreen() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  const t = document.getElementById('clockTime');
+  if (t) t.textContent = hh + ':' + mm + ':' + ss;
+  const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const d = document.getElementById('clockDate');
+  if (d) d.textContent = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+}
+setInterval(() => { updateClock(); updateClockScreen(); }, 1000);
+
+/* ================= STORE ================= */
+let storeCategory = 'all';
+function categoryForStoreApp(app){
+  if(app.category==='study'||app.category==='media'||app.category==='office'||app.category==='tools'||app.category==='business'||app.category==='system') return app.category;
+  if(/^game-/.test(app.id)||app.id==='games'||app.id==='match') return 'games';
+  if(['vlc-mini','video-player','audio-player','mp4-mp3','music','radio-offline','soundboard','video-library','music-playlist'].includes(app.id)) return 'media';
+  if(['mini-word','mini-excel','text-editor','todo','journal','shopping-list','habit-tracker','calendar-agenda','grade-book','attendance','slides'].includes(app.id)) return 'office';
+  if(['bank','currency','calculator-budget','invoice-maker','profit-calc','stock-manager','sales-book','business-plan','budget-family','expense-book','receipt-book'].includes(app.id)) return 'business';
+  if(['about','kiz-history','system-info','ussd-guide','backup','downloads','download-center'].includes(app.id)) return 'system';
+  return 'tools';
+}
+function setStoreCategory(category){
+  storeCategory=category;
+  document.querySelectorAll('.store-chip').forEach(b=>b.classList.toggle('active',b.dataset.category===category));
+  renderStore();
+}
+function clearStoreSearch(){
+  const input=document.getElementById('storeSearch');if(input)input.value='';
+  renderStore();
+}
+function renderStore() {
+  const list=document.getElementById('storeList'); if(!list)return;
+  const query=(document.getElementById('storeSearch')?.value||'').trim().toLocaleLowerCase('fr');
+  const workingGameIds = new Set(['game-snake','game-memory','game-tictactoe','game-2048','game-quiz','game-math','game-word','game-puzzle']);
+  const hiddenUntilUpdate = new Set(['travel-planner','world-clock','water-reminder']);
+  const apps=STORE_APPS.filter(app=>{
+    if(app.category==='games' && !workingGameIds.has(app.id)) return false;
+    if(hiddenUntilUpdate.has(app.id) && !state.hiddenAppsUnlocked) return false;
+    const matchesText=(app.name+' '+app.desc+' '+app.id).toLocaleLowerCase('fr').includes(query);
+    const matchesCategory=storeCategory==='all'||categoryForStoreApp(app)===storeCategory;
+    return matchesText&&matchesCategory;
+  });
+  const count=document.getElementById('storeResultsCount');
+  if(count)count.textContent=`${apps.length} application${apps.length>1?'s':''} trouvée${apps.length>1?'s':''}`;
+  const appCount=document.getElementById('storeAppCount');
+  if(appCount)appCount.textContent=STORE_APPS.filter(a=>a.category!=='games'||['game-snake','game-memory','game-tictactoe','game-2048','game-quiz','game-math','game-word','game-puzzle'].includes(a.id)).length + (state.hiddenAppsUnlocked?3:0);
+  if(!apps.length){
+    list.innerHTML='<div class="store-empty"><div>🔎</div><b>Aucune application trouvée</b><p style="font-size:12px;margin-top:6px">Essayez un autre mot ou choisissez une autre catégorie.</p></div>';
+    return;
+  }
+  list.innerHTML=apps.map(app=>{
+    const installed=state.installedApps.includes(app.id);
+    const size=app.sizeMB>=1024?(app.sizeMB/1024).toFixed(1)+' Go':(app.sizeMB||50)+' Mo';
+    return `<div class="app-card">
+      <div class="ac-icon" style="background:${app.color||'linear-gradient(135deg,#4facfe,#0066ff)'}">${app.icon||'📱'}</div>
+      <div class="ac-info"><div class="ac-name">${app.name}</div><div class="ac-desc">${app.desc}</div><div class="store-size">💾 ${size}</div></div>
+      <button class="install-btn ${installed?'installed':''}" onclick="installApp('${app.id}',this)">${installed?'✓ Installé':'Installer'}</button>
+    </div>`;
+  }).join('');
+}
+
+function installApp(id, btn) {
+  if (!state.data && !state.wifi) {
+    document.getElementById('dataOverlay').classList.add('show');
+    return;
+  }
+  if (state.installedApps.includes(id)) { showToast('Déjà installé'); return; }
+  // Catalogue metadata is available locally; a simulated download consumes virtual MB.
+  const appMeta = STORE_APPS.find(a => a.id === id);
+  const cost = appMeta ? appMeta.sizeMB : 50;
+  if ((state.megabytes || 0) < cost) { showToast('Forfait KIZ insuffisant : '+formatVirtualMB(cost)+' requis'); return; }
+  if (virtualStorageUsedMB() + cost > KIZ_STORAGE_CAPACITY_MB) {
+    showToast('Stockage KIZ plein : libérez de l’espace avant l’installation.');
+    return;
+  }
+  btn.textContent = 'Téléchargement…'; btn.classList.add('loading');
+  setTimeout(() => {
+    state.megabytes -= cost;
+    state.installedApps.push(id); save();
+    btn.textContent = '✓ Installé'; btn.classList.add('installed'); btn.classList.remove('loading');
+    const app = STORE_APPS.find(a => a.id === id);
+    showToast((app ? app.icon+' '+app.name : 'Application') + ' installé • '+formatVirtualMB(cost)+' utilisés');
+  }, 600);
+}
+
+/* ================ APPLICATIONS KIZ : OUTILS LOCAUX ================ */
+function appField(label,id,placeholder='',type='text'){return `<label style="display:block;font-size:12px;color:#b9c9e5;margin-top:8px">${label}</label><input id="${id}" type="${type}" placeholder="${placeholder}" />`;}
+function appBtn(label,fn){return `<button class="btn" onclick="${fn}">${label}</button>`;}
+function renderKIZPlansScreen(){
+ const plans=Array.isArray(state.plans)?state.plans:[];
+ const mb=Math.max(0,Number(state.megabytes)||0);
+ const balance=Math.max(0,Number(state.balance)||0);
+ const fmt=typeof formatVirtualMB==='function'?formatVirtualMB(mb):(mb>=1024?(mb/1024).toFixed(2)+' Go':mb+' Mo');
+ const planCards=plans.length?plans.map((p,i)=>`<div class="tool-box" style="margin-top:10px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b>${escapeKIZ(p.name||('Forfait '+(i+1)))}</b><p style="margin-top:6px;color:#c5d5ec">📦 ${Number(p.qty)||0} ${String(p.unit||'MB').toUpperCase()==='GB'||String(p.unit||'').toUpperCase()==='GO'?'Go':'Mo'}</p><p style="margin-top:4px;color:#aab8d0;font-size:12px">⏳ ${Number(p.duration)===0?'Sans expiration':(Number(p.duration)||0)+' jour(s)'}</p></div><b style="color:#67e8f9;white-space:nowrap">${Number(p.price)||0} KIZ</b></div><button class="btn" style="width:100%;margin-top:10px" onclick="buyKIZPlan(${i})">Acheter ce forfait</button></div>`).join(''):'<div class="tool-box" style="margin-top:10px">Aucun forfait disponible pour le moment. L’administrateur doit d’abord en créer dans Administration KIZ.</div>';
+ return `<div class="tool-box" style="background:linear-gradient(135deg,#082f49,#1e3a8a);border:1px solid #38bdf8"><div style="font-size:13px;color:#bae6fd">INTERNET RESTANT</div><div style="font-size:30px;font-weight:800;margin:7px 0">${fmt}</div><div style="font-size:13px;color:#dbeafe">Solde KIZ : <b>${balance} KIZ</b></div><button class="btn secondary" style="margin-top:12px" onclick="refreshKIZPlansScreen()">🔄 Actualiser le solde</button></div><h3 style="margin:16px 0 8px">📶 Forfaits disponibles</h3>${planCards}<div class="tool-box" style="margin-top:12px;font-size:12px;color:#aab8d0">Les forfaits, prix et soldes sont virtuels et enregistrés dans KIZ OS. Ils ne correspondent pas au solde réel d’un opérateur téléphonique.</div>`;
+}
+function refreshKIZPlansScreen(){const body=document.getElementById('appToolContent');if(body)body.innerHTML=renderKIZPlansScreen();}
+function buyKIZPlan(i){
+ const p=(state.plans||[])[i];
+ if(!p){showToast('Ce forfait n’est plus disponible.');refreshKIZPlansScreen();return;}
+ const price=Number(p.price),qty=Number(p.qty),unit=String(p.unit||'MB').toUpperCase();
+ if(!Number.isFinite(price)||price<0||!Number.isFinite(qty)||qty<=0){showToast('Les informations de ce forfait sont invalides.');return;}
+ if((Number(state.balance)||0)<price){showToast('Solde KIZ insuffisant : il faut '+price+' KIZ.');return;}
+ if(!confirm('Acheter « '+String(p.name||'Forfait')+' » pour '+price+' KIZ ?'))return;
+ const boughtMB=(unit==='GB'||unit==='GO')?qty*1024:qty;
+ state.balance=(Number(state.balance)||0)-price;state.megabytes=(Number(state.megabytes)||0)+boughtMB;
+ state.transactions=state.transactions||[];state.transactions.push({type:'Achat forfait Internet',name:p.name||'Forfait',amount:qty,unit:unit,date:Date.now(),price:price});
+ save();if(typeof updateHomeResources==='function')updateHomeResources();refreshKIZPlansScreen();showToast('Forfait acheté ! '+(typeof formatVirtualMB==='function'?formatVirtualMB(boughtMB):boughtMB+' Mo')+' ajouté.');
+}
+function renderStoreApp(app){
+ const body=document.getElementById('appToolContent'); if(!body)return;
+ const id=app.id; let html=`<div class="app-tool"><div class="tool-box"><b>${app.icon} ${app.name}</b><p style="font-size:12px;color:#aab8d0;margin-top:5px">${app.desc}</p><small>Stockage virtuel : ${formatVirtualMB(app.sizeMB||50)}. Les fichiers créés restent dans ce navigateur jusqu'à exportation/sauvegarde.</small></div>`;
+ const textArea=(name,ph='Écrivez ici…')=>`<textarea id="${name}" placeholder="${ph}"></textarea>`;
+ if(id==='plans-kiz'){html+=renderKIZPlansScreen();}
+ if(id==='ussd-guide'){
+  html+=`<div class="tool-box"><h3>Codes USSD KIZ</h3>
+  <p style="margin-top:8px">📞 <b>*103#</b> — afficher votre numéro international et local</p>
+  <p style="margin-top:8px">💰 <b>*100#</b> — solde KIZ</p>
+  <p style="margin-top:8px">📲 <b>*101#</b> — unités disponibles</p>
+  <p style="margin-top:8px">✉️ <b>*102#</b> — SMS disponibles</p>
+  <p style="margin-top:8px">📱 <b>*104#</b> — forfait Internet virtuel</p>
+  <p style="margin-top:8px">🛍️ <b>*425#</b> — forfaits disponibles</p>
+  <p style="margin-top:8px">🔎 <b>*105#</b> — aide USSD</p>
+  <p style="font-size:12px;color:#aab8d0;margin-top:12px">Ouvrez l’application Téléphone KIZ pour composer un code. Les codes fonctionnent dans la simulation KIZ OS.</p>
+  <button class="btn" onclick="launchApp('phone','phone')">Ouvrir Téléphone KIZ</button></div>`;
+ } else if(id==='word-counter'){
+  html+=`<textarea id="wordCounterText" placeholder="Collez ou écrivez votre texte…" oninput="updateWordCounter()" style="min-height:180px"></textarea><div id="wordCounterResult" class="tool-box">Mots : 0 • Caractères : 0 • Lignes : 0</div>`;
+ } else if(id==='password-generator'){
+  html+=`<label>Longueur</label><input id="pwLength" type="number" min="8" max="64" value="16"><label><input id="pwSymbols" type="checkbox" checked style="width:auto"> Inclure des symboles</label><button class="btn" onclick="generateKIZPassword()">Générer</button><input id="pwResult" readonly placeholder="Votre mot de passe apparaîtra ici"><button class="btn secondary" onclick="copyKIZPassword()">Copier</button><p style="font-size:11px;color:#aab8d0">Ce générateur fonctionne hors ligne. Enregistrez votre mot de passe dans un endroit sûr.</p>`;
+ } else if(id==='quick-draw'){
+  html+=`<label>Couleur</label><input type="color" id="quickDrawColor" value="#2563eb" style="width:70px;height:42px"><canvas id="quickDrawCanvas" width="600" height="420" style="width:100%;background:#fff;border-radius:12px;touch-action:none;margin:10px 0"></canvas><button class="btn" onclick="exportQuickDraw()">Exporter le dessin</button><button class="btn secondary" onclick="clearQuickDraw()">Effacer</button>`;
+ }
+ else if(id==='chat'){
+  html+=`<div id="kizChatMessages" class="tool-box" style="min-height:180px;max-height:300px;overflow:auto"></div><label>Votre message</label><textarea id="kizChatInput" placeholder="Écrivez un message local…"></textarea><button class="btn" onclick="sendKIZLocalMessage()">Envoyer</button><button class="btn secondary" onclick="clearKIZLocalMessages()">Effacer la conversation</button><small>Conversation enregistrée uniquement sur cet appareil.</small>`;
+ } else if(id==='mail'){
+  html+=appField('Destinataire (facultatif)','mailTo','Adresse ou nom')+appField('Objet','mailSubject','Objet du brouillon')+textArea('mailBody','Rédigez votre courriel…')+appBtn('Enregistrer le brouillon',`saveMailDraft()`)+`<div id="mailResult" class="tool-box"></div>`;
+ } else if(id==='stopwatch'){
+  html+=`<div class="tool-box" style="text-align:center"><h2 id="stopwatchDisplay">00:00.0</h2><button class="btn" onclick="toggleKIZStopwatch()">Démarrer / Pause</button><button class="btn secondary" onclick="resetKIZStopwatch()">Réinitialiser</button></div>`;
+ } else if(id==='timer'||id==='exam-timer'){
+  html+=appField('Minutes','timerMinutes','Ex. 5','number')+`<div class="tool-box"><h2 id="timerDisplay">Prêt</h2><button class="btn" onclick="startKIZTimer()">Démarrer</button><button class="btn secondary" onclick="stopKIZTimer()">Arrêter</button></div>`;
+ } else if(id==='calculator-scientific'||id==='calculator-scientific2'||id==='calculator-science2'){
+  html+=appField('Expression mathématique','scientificInput','Ex. (12+8)/2')+appBtn('Calculer',`runScientificToolCalc()`)+`<div id="scientificResult" class="tool-box">Résultat affiché ici.</div><small>Fonctions disponibles : + − × ÷, parenthèses, puissance via **, sin, cos, tan, sqrt, log.</small>`;
+ } else if(id==='music'){
+  html+=`<input type="file" id="mediaFile" accept="audio/*" onchange="loadMedia('audio')"><audio id="mediaAudio" controls style="width:100%;margin-top:12px"></audio><p>Choisissez un fichier audio enregistré sur votre appareil. Aucun fichier n’est envoyé sur Internet.</p>`;
+ } else if(id==='browser-tools'){
+  html+=`<p>Ouvrir une page Web (connexion Internet nécessaire pour les sites en ligne).</p><input id="browserAddress" placeholder="https://example.com"><button class="btn" onclick="openBrowserAddress()">Ouvrir le site</button><div class="tool-box">Pour fonctionner, le site doit être accessible et le navigateur doit autoriser l’ouverture.</div>`;
+ } else if(id==='gallery-tools'){
+  html+=`<p>Photos capturées dans KIZ OS :</p><div id="kizGalleryGrid" class="tool-box"></div><button class="btn" onclick="renderKIZMiniGallery()">Actualiser la galerie</button>`;
+ } else if(['notes','mini-word','text-editor','journal','recipe-book','code-notes','physics-notes','chemistry-notes','history-notes','geography-guide','biology-guide','speech-notes'].includes(id)){
+  if(id==='mini-word') html+=`<button class="btn secondary" onclick="document.execCommand('bold')">Gras</button><button class="btn secondary" onclick="document.execCommand('italic')">Italique</button><button class="btn secondary" onclick="document.execCommand('underline')">Souligner</button><div contenteditable="true" id="wordArea" style="min-height:220px;background:#fff;color:#172033;border-radius:10px;padding:12px;margin:8px 0">Rédigez votre document ici…</div>`; else html+=textArea('docText','Écrivez ici…');
+  html+=appBtn('Enregistrer localement',`saveAppText('${id}')`)+appBtn('Exporter TXT',`exportAppText('${id}','txt')`);
+ } else if(['html-editor','html-preview','python-editor','json-editor'].includes(id)){
+  html+=textArea('codeArea',id==='python-editor'?'print("Bonjour KIZ OS")':id==='json-editor'?'{"nom":"KIZ"}':'<!doctype html>\n<html><body><h1>Bonjour KIZ OS</h1></body></html>');
+  if(id==='html-editor'||id==='html-preview') html+=appBtn('Prévisualiser',`previewHTML()`);
+  if(id==='json-editor') html+=appBtn('Vérifier JSON',`validateJSON()`);
+  html+=appBtn('Télécharger le fichier',`exportCode('${id}')`)+`<div id="codeResult" class="tool-box"></div>`;
+ } else if(id==='mini-excel'){
+  html+=`<p>Remplissez les cellules. Les formules SOMME sont disponibles avec le bouton Calculer la somme.</p><div style="overflow:auto"><table id="miniSheet" border="1" style="border-collapse:collapse;width:100%;background:#fff;color:#111"><tbody>${Array.from({length:8},(_,r)=>'<tr>'+Array.from({length:4},(_,c)=>`<td><input aria-label="cellule" style="width:90px;color:#111;background:#fff;border:0;padding:7px;margin:0" data-r="${r}" data-c="${c}" value="${r===0?String.fromCharCode(65+c):''}"></td>`).join('')+'</tr>').join('')}</tbody></table></div><div id="sheetResult" class="tool-box">Saisissez les données puis exportez en CSV.</div>`+appBtn('Calculer somme colonne B',`sumSheet()`)+appBtn('Exporter CSV',`exportSheet()`);
+ } else if(id==='vlc-mini'){
+  html+=`<div class="tool-box"><h3>🎬 VLC-mini</h3><p>Choisissez une vidéo ou une musique stockée sur votre téléphone.</p><label>Vidéo</label><input type="file" id="vlcVideoFile" accept="video/*" onchange="loadVLCMini('video')"><video id="vlcVideo" controls playsinline style="width:100%;max-height:300px;background:#000;border-radius:12px;margin-top:8px"></video><label>Audio</label><input type="file" id="vlcAudioFile" accept="audio/*" onchange="loadVLCMini('audio')"><audio id="vlcAudio" controls style="width:100%;margin-top:8px"></audio><small>Lecteur local KIZ : certains codecs dépendent du navigateur. Il ne s’agit pas de l’application officielle VLC.</small></div>`;
+ } else if(['video-player','video-library'].includes(id)){
+  html+=`<input type="file" id="mediaFile" accept="video/*" onchange="loadMedia('video')"><video id="mediaVideo" controls playsinline style="width:100%;max-height:320px;background:#000;border-radius:12px"></video><p>Choisissez un fichier vidéo présent sur l'appareil. Le fichier n'est pas envoyé sur Internet.</p>`;
+ } else if(['audio-player','music-playlist','radio-offline','soundboard'].includes(id)){
+  html+=`<input type="file" id="mediaFile" accept="audio/*" onchange="loadMedia('audio')"><audio id="mediaAudio" controls style="width:100%;margin-top:12px"></audio><p>Choisissez un fichier audio local.</p>`;
+ } else if(id==='mp4-mp3'){
+  html+=`<p>Choisissez une vidéo MP4. Cette version peut extraire l'audio et l'exporter en WAV si votre navigateur permet la capture. La création directe d'un MP3 nécessite un encodeur supplémentaire.</p><input type="file" id="convertVideoFile" accept="video/mp4,video/*"><button class="btn" onclick="extractAudioWav()">Extraire l'audio en WAV</button><video id="convertVideo" controls style="width:100%;max-height:200px;background:#000"></video><div id="convertStatus" class="tool-box"></div>`;
+ } else if(id==='pdf-reader'||id==='reader'||id==='file-tools'||id==='archive-manager'||id==='download-center'||id==='file-converter'){
+  html+=`<input type="file" id="docFile" accept=".pdf,.txt,.html,.json,.csv,.md,.py,.js,.css,.xml,.zip"><div id="filePreview" class="tool-box">Sélectionnez un document. Les PDF s'ouvrent dans le navigateur si pris en charge.</div><button class="btn" onclick="openSelectedDoc()">Ouvrir le fichier</button>`;
+ } else if(id==='paint'||id==='photo-editor'||id==='image-resizer'||id==='wallpaper-studio'||id==='color-picker'){
+  html+=`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label style="margin:0">Couleur <input type="color" id="paintColor" value="#4facfe" style="width:48px;height:38px;vertical-align:middle"></label><button class="btn secondary" id="paintEraserBtn" onclick="togglePaintEraser()">🧽 Gomme : désactivée</button><label style="margin:0">Épaisseur <input type="range" id="paintWidth" min="3" max="36" value="4" style="width:100px;vertical-align:middle"></label></div><input type="file" id="imageInput" accept="image/*" onchange="previewChosenImage()"><canvas id="paintCanvas" width="320" height="300" style="width:100%;background:#fff;border-radius:12px;touch-action:none"></canvas><button class="btn secondary" onclick="clearPaint()">Tout effacer</button><button class="btn" onclick="savePaint()">Enregistrer dessin</button><div id="imagePreview"></div>`;
+ } else if(['contacts','client-book','supplier-book','contact-backup'].includes(id)){
+  html+=appField('Nom','contactName','Nom complet')+appField('Téléphone / note','contactInfo','Coordonnée ou note')+appBtn('Enregistrer le contact',`saveContact('${id}')`)+`<div id="contactList" class="tool-box"></div>`;
+ } else if(['todo','shopping-list','habit-tracker','attendance','grade-book','unit-planner','calendar-agenda','calendar-tools','travel-planner','business-plan','invoice-list','expense-book','sales-book','stock-manager','invoice-maker','profit-calc','budget-family','receipt-book','client-book','supplier-book','expense-split','fitness-log','sleep-log','water-reminder','pet-care','plant-care','flashcards','quiz-maker','french-words','exam-timer'].includes(id)){
+  html+=appField('Titre / élément','listTitle','Saisissez un élément')+textArea('listDetails','Détails, montant, note…')+appBtn('Ajouter / enregistrer',`saveListItem('${id}')`)+`<div id="listResult" class="tool-box"></div>`;
+ } else if(id==='currency'||id.startsWith('currency-')||id==='unit-converter'||id==='calculator-tip'||id==='loan-calc'||id==='calculator-scientific2'||id==='calculator-budget'||id==='calculator-science2'){
+  html+=appField('Valeur A','calcA','Nombre','number')+appField('Valeur B / taux','calcB','Nombre','number')+`<select id="calcOp"><option value="+">Addition</option><option value="-">Soustraction</option><option value="*">Multiplication</option><option value="/">Division</option><option value="%">Pourcentage A de B</option></select>`+appBtn('Calculer',`runToolCalc()`)+`<div id="toolCalcResult" class="tool-box">Résultat affiché ici.</div>`;
+ } else if(id==='game-snake'){
+  html+=`<div class="tool-box"><h3>🐍 Snake</h3><p>Utilisez les flèches ou les boutons. Mangez les points sans toucher les murs ni votre queue.</p><canvas id="snakeCanvas" width="320" height="320" style="width:100%;max-width:320px;display:block;margin:8px auto;background:#081322;border-radius:12px;touch-action:none"></canvas><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:220px;margin:8px auto"><span></span><button class="btn" onclick="snakeTurn(0,-1)">⬆️</button><span></span><button class="btn" onclick="snakeTurn(-1,0)">⬅️</button><button class="btn" onclick="snakeTurn(0,1)">⬇️</button><button class="btn" onclick="snakeTurn(1,0)">➡️</button></div><div id="snakeScore" class="tool-box">Score : 0</div><button class="btn" onclick="startSnakeGame()">Nouvelle partie / Recommencer</button><button class="btn secondary" onclick="stopSnakeGame()">Pause</button></div>`;
+ } else if(id==='game-tictactoe'){
+  html+=`<div class="tool-box"><h3>❎ Morpion à deux joueurs</h3><p>Deux joueurs sur le même téléphone : X puis O. Touchez une case vide.</p><div id="tttStatus" class="tool-box">Au tour de X</div><div id="tttBoard" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:300px;margin:10px auto"></div><button class="btn" onclick="resetTicTacToe()">Nouvelle partie</button><div id="tttScore" class="tool-box">X : 0 • O : 0 • Nuls : 0</div></div>`;
+ } else if(id==='game-memory'){
+  html+=`<div class="tool-box"><h3>🧠 Mémoire</h3><p>Retrouvez les paires identiques.</p><div id="memoryBoard" style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px"></div><p id="memoryStatus" class="tool-box">Paires trouvées : 0 / 8</p><button class="btn" onclick="startMemoryGame()">Recommencer</button></div>`;
+ } else if(id==='game-2048'){
+  html+=`<div class="tool-box"><h3>🔢 2048</h3><p>Fusionnez les mêmes nombres avec les flèches ou les boutons.</p><div id="g2048Board" style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;max-width:300px;margin:auto"></div><p id="g2048Score" class="tool-box">Score : 0</p><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:210px;margin:auto"><span></span><button class="btn" onclick="move2048(0,-1)">⬆️</button><span></span><button class="btn" onclick="move2048(-1,0)">⬅️</button><button class="btn" onclick="move2048(0,1)">⬇️</button><button class="btn" onclick="move2048(1,0)">➡️</button></div><button class="btn secondary" onclick="start2048()">Nouvelle partie</button></div>`;
+ } else if(id==='game-quiz'){
+  html+=`<div class="tool-box"><h3>🧠 Quiz culture générale</h3><div id="quizQuestion"></div><div id="quizChoices"></div><p id="quizScore" class="tool-box">Score : 0</p><button class="btn secondary" onclick="nextKIZQuiz()">Question suivante</button></div>`;
+ } else if(id==='game-math'){
+  html+=`<div class="tool-box"><h3>➕ Défi calcul</h3><p id="mathQuestion" style="font-size:22px;text-align:center"></p><input id="mathAnswer" type="number" placeholder="Votre réponse"><button class="btn" onclick="checkKIZMath()">Vérifier</button><button class="btn secondary" onclick="newKIZMath()">Nouveau calcul</button><p id="mathResult" class="tool-box"></p><p id="mathScore" class="tool-box">Score : 0</p></div>`;
+ } else if(id==='game-word'){
+  html+=`<div class="tool-box"><h3>🔠 Mots mélangés</h3><p>Remettez les lettres dans le bon ordre.</p><h2 id="scrambleLetters" style="text-align:center;letter-spacing:5px"></h2><input id="scrambleAnswer" placeholder="Mot correct"><button class="btn" onclick="checkScrambleWord()">Vérifier</button><button class="btn secondary" onclick="newScrambleWord()">Autre mot</button><p id="scrambleResult" class="tool-box"></p></div>`;
+ } else if(id==='game-reaction'){
+  html+=`<div class="tool-box"><h3>⚡ Test de réflexes</h3><p id="reactionMessage">Appuyez sur Démarrer, puis touchez dès que la zone devient verte.</p><button id="reactionButton" class="btn" onclick="startReactionTest()">Démarrer</button><p id="reactionResult" class="tool-box"></p></div>`;
+ } else if(id==='game-puzzle'){
+  html+=`<div class="tool-box"><h3>🧩 Puzzle logique</h3><p>Quel nombre complète la suite ?</p><h2 id="puzzleQuestion" style="text-align:center"></h2><input id="puzzleAnswer" type="number" placeholder="Nombre suivant"><button class="btn" onclick="checkKIZPuzzle()">Vérifier</button><button class="btn secondary" onclick="newKIZPuzzle()">Autre défi</button><p id="puzzleResult" class="tool-box"></p></div>`;
+ } else if(id==='games'||id==='match'){
+  html+=`<div class="tool-box"><h3>🎮 Mini-jeu hors ligne</h3><p id="gamePrompt">Appuyez pour commencer.</p><input id="gameAnswer" placeholder="Votre réponse"><button class="btn" onclick="playMiniGame('${id}')">Jouer / vérifier</button><div id="gameResult"></div><p style="font-size:11px;color:#9fb4d8">Points virtuels uniquement, sans argent réel.</p></div>`;
+ } else if(id==='bank'){
+  html+=`<div class="tool-box"><h3>Solde KIZ Money</h3><p>${state.balance||0} KIZ</p><p>Transactions : ${(state.transactions||[]).length}</p><p>Les montants sont fictifs et locaux.</p></div>`;
+ } else if(id==='weather'){
+  html+=`<div class="tool-box"><h3>Météo locale (démonstration hors ligne)</h3><p>Choisissez une condition simulée :</p><select id="weatherChoice"><option>Ensoleillé ☀️</option><option>Nuageux ☁️</option><option>Pluie 🌧️</option><option>Orage ⛈️</option></select><button class="btn" onclick="document.getElementById('weatherResult').textContent='Condition choisie : '+document.getElementById('weatherChoice').value">Afficher</button><p id="weatherResult"></p><small>Ce résultat n'est pas une prévision météo réelle.</small></div>`;
+ } else if(id==='translator'||id==='translator-fr-en'){
+  html+=textArea('translateInput','Écrivez un mot ou une expression en français ou anglais')+appBtn('Traduire les expressions connues',`translateLocal()`)+`<div id="translateResult" class="tool-box"></div>`;
+ } else if(id==='dictionary'||id==='dictionary-fr'||id==='dictionary-en'||id==='english-words'){
+  html+=`<p class="tool-box">Dictionnaire français–anglais hors ligne : plus de 300 mots. Essayez aussi les mots en français.</p>`+appField('Mot à rechercher','dictWord','Ex. hello / bonjour')+appBtn('Rechercher',`lookupWord()`)+`<div id="dictResult" class="tool-box"></div>`;
+ } else if(id==='voice'||id==='text-to-speech'){
+  html+=textArea('speechText','Texte à lire')+appBtn('Lire le texte',`speakText()`)+`<p>La synthèse vocale dépend des voix installées sur le navigateur.</p>`;
+ } else if(id==='recorder'||id==='voice-notes'){
+  html+=`<p>Enregistrement audio si cette version du navigateur autorise le microphone.</p><button class="btn" onclick="startAudioRecord()">Commencer</button><button class="btn secondary" onclick="stopAudioRecord()">Arrêter</button><div id="recordResult" class="tool-box"></div>`;
+ } else if(id==='backup'){
+  html+=`<p>Exportez toutes les données locales de KIZ OS dans un fichier JSON.</p><button class="btn" onclick="backupKIZ()">Exporter la sauvegarde</button><button class="btn secondary" onclick="document.getElementById('restoreKIZFile').click()">Importer une sauvegarde</button>`;
+ } else if(id==='kiz-history'){
+  html+=`<div class="history-panel"><h3>📖 L’histoire de KIZ OS</h3><p><b>KIZ OS</b> est un projet de téléphone virtuel conçu comme un environnement interactif accessible dans une page HTML. Il rassemble une interface d’accueil, des paramètres, un catalogue d’applications et plusieurs outils de démonstration.</p></div>
+  <div class="history-panel"><h3>👨‍💻 Le créateur</h3><p>Le créateur principal du projet est <b>KIBWE ZONGWE Israël</b>. Le projet évolue progressivement grâce à des essais, des corrections et l’ajout de nouvelles fonctions. Cette fiche ne prétend pas attribuer le projet à d’autres créateurs non confirmés.</p></div>
+  <div class="history-panel"><h3>🔤 Que signifie KIZ OS ?</h3><p><b>OS</b> vient de l’anglais <i>Operating System</i>, c’est-à-dire « système d’exploitation ». <b>KIZ</b> est le nom choisi pour cet univers virtuel. Dans cette version, les lettres K-I-Z n’ont pas d’expansion officielle supplémentaire.</p><p style="margin-top:8px">KIZ OS imite certains éléments d’un smartphone, mais ne remplace pas Android et ne contrôle pas à lui seul tout le matériel du téléphone.</p></div>
+  <div class="history-panel"><h3>📱 Comment fonctionne KIZ OS ?</h3><ul><li>Utilisez l’écran d’accueil pour ouvrir les applications intégrées ou installées.</li><li>Dans <b>KIZ App Store</b>, recherchez une application ou choisissez une catégorie, puis installez-la avec les données virtuelles nécessaires.</li><li>Les paramètres servent à personnaliser l’affichage, les connexions simulées et les préférences.</li><li>Les appels, le numéro SIM, les unités, les SMS et le solde KIZ sont des éléments virtuels de la simulation.</li><li>Les fichiers personnels ne sont accessibles qu’après sélection et autorisation dans le sélecteur du téléphone.</li></ul></div>
+  <div class="history-panel"><h3>🔐 Administration KIZ : rôle et importance</h3><p>L’administration sert à gérer les ressources virtuelles de la simulation, comme le solde, les unités, les SMS et les forfaits. Elle permet de tester et de maintenir la cohérence de l’environnement KIZ OS.</p><p style="margin-top:8px">L’accès doit être réservé à la personne autorisée. Ne partagez pas votre accès administrateur. Cette page explique son rôle, mais ne révèle aucun code d’accès.</p></div>
+  <div class="history-panel"><h3>🧭 Conseils d’utilisation</h3><ul><li>Utilisez le bouton retour pour revenir à l’écran précédent.</li><li>Exportez régulièrement une sauvegarde depuis les Paramètres.</li><li>Gardez à l’esprit que les téléchargements et soldes sont simulés, sauf si une fonction externe est explicitement intégrée.</li></ul></div>`;
+ } else if(id==='about'||id==='system-info'||id==='security'||id==='privacy-check'){
+  html+=`<div class="tool-box"><p><b>KIZ OS</b> est une simulation hors ligne dans une page HTML. Les connexions, le SIM et le stockage sont virtuels. Les commandes radio réelles et les applications Android natives exigent une intégration native.</p><p>Applications au catalogue : ${STORE_APPS.length}.</p><p>Applications installées : ${state.installedApps.length}.</p><p>Version KIZ OS : ${escapeHTMLKIZ(state.osVersion||'1.0')}.</p><p>Stockage virtuel utilisé : ${formatCapacityMB(virtualStorageUsedMB())} sur 64 Go.</p><p>La capacité de 64 Go est simulée ; le navigateur peut imposer une limite réelle plus petite.</p></div>`;
+ } else if(id==='qr-maker'){
+  html+=textArea('qrText','Texte ou lien à encoder')+`<p>Copiez ce texte pour le partager. La création d'une vraie image QR nécessite un générateur intégré.</p><div id="qrTextResult" class="tool-box"></div>`+appBtn('Afficher le texte',`document.getElementById('qrTextResult').textContent=document.getElementById('qrText').value`);
+ } else if(id==='password-vault'){
+  html+=`<p>Ne stockez pas de vrais mots de passe sensibles dans cette démonstration.</p>`+appField('Nom de l’entrée','vaultName','Ex. Wi-Fi')+textArea('vaultText','Note locale')+appBtn('Enregistrer la note',`saveListItem('${id}')`)+`<div id="listResult" class="tool-box"></div>`;
+ } else if(id==='flashlight'){
+  html+=`<div class="tool-box"><p>Lampe de démonstration</p><button class="btn" onclick="document.getElementById('appBody').style.background=document.getElementById('appBody').style.background?'':'#fff';showToast('Effet visuel activé')">Allumer / éteindre l’effet</button><p>Cette commande ne contrôle pas la vraie lampe du téléphone.</p></div>`;
+ } else {
+  html+=`<div class="tool-box">Outil hors ligne de base. Vous pouvez enregistrer vos éléments ci-dessous.</div>`+appField('Texte','genericText','Saisissez votre contenu')+appBtn('Enregistrer',`saveListItem('${id}')`)+`<div id="listResult" class="tool-box"></div>`;
+ }
+ html+='</div>'; body.innerHTML=html;
+ if(id==='word-counter') updateWordCounter();
+ if(id==='quick-draw') initQuickDraw();
+ if(id==='game-snake') startSnakeGame();
+ if(id==='game-tictactoe') initTicTacToe();
+ if(id==='game-memory') startMemoryGame();
+ if(id==='game-2048') start2048();
+ if(id==='game-quiz') nextKIZQuiz();
+ if(id==='game-math') newKIZMath();
+ if(id==='game-word') newScrambleWord();
+ if(id==='game-puzzle') newKIZPuzzle();
+ // Restaurer les contenus enregistrés quand on rouvre une application.
+ const saved=(state.appData||{})[id];
+ if(typeof saved==='string'){
+  const doc=document.getElementById('docText'); if(doc)doc.value=saved;
+  const word=document.getElementById('wordArea'); if(word)word.innerHTML=saved;
+  const code=document.getElementById('codeArea'); if(code)code.value=saved;
+ }
+ if(id==='chat') renderKIZLocalMessages();
+ if(id==='mail') renderMailDraft();
+ if(id==='gallery-tools') renderKIZMiniGallery();
+ if(['paint','photo-editor','wallpaper-studio'].includes(id)) initPaint();
+ if(['contacts','client-book','supplier-book'].includes(id)) renderContactList(id);
+ if(['todo','shopping-list','habit-tracker','attendance','grade-book','unit-planner','calendar-agenda','calendar-tools','travel-planner','business-plan','invoice-list','expense-book','sales-book','stock-manager','invoice-maker','profit-calc','budget-family','receipt-book','client-book','supplier-book','expense-split','fitness-log','sleep-log','water-reminder','pet-care','plant-care','flashcards','quiz-maker','french-words','exam-timer','password-vault'].includes(id)) renderListItems(id);
+}
+let kizStopwatchStart=0,kizStopwatchElapsed=0,kizStopwatchTicker=null,kizTimerTicker=null,kizTimerRemaining=0;
+function updateWordCounter(){
+ const el=document.getElementById('wordCounterText'),out=document.getElementById('wordCounterResult');if(!el||!out)return;
+ const v=el.value;const words=v.trim()?v.trim().split(/\s+/).length:0;
+ out.textContent='Mots : '+words+' • Caractères : '+v.length+' • Lignes : '+(v? v.split(/\r\n|\r|\n/).length:0);
+}
+function generateKIZPassword(){
+ const len=Math.max(8,Math.min(64,Number(document.getElementById('pwLength')?.value)||16));
+ const symbols=!!document.getElementById('pwSymbols')?.checked;
+ const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'+(symbols?'!@#$%&*+-=?_':'');
+ let out='';
+ try{const values=new Uint32Array(len);crypto.getRandomValues(values);for(let i=0;i<len;i++)out+=chars[values[i]%chars.length];}
+ catch(e){for(let i=0;i<len;i++)out+=chars[Math.floor(Math.random()*chars.length)];}
+ const el=document.getElementById('pwResult');if(el)el.value=out;
+}
+async function copyKIZPassword(){
+ const el=document.getElementById('pwResult');if(!el||!el.value){showToast('Générez d’abord un mot de passe');return;}
+ try{await navigator.clipboard.writeText(el.value);showToast('Mot de passe copié');}
+ catch(e){el.select();try{document.execCommand('copy');showToast('Mot de passe copié');}catch(_){showToast('Sélectionnez puis copiez le mot de passe');}}
+}
+function initQuickDraw(){
+ const c=document.getElementById('quickDrawCanvas');if(!c)return;const ctx=c.getContext('2d');ctx.lineWidth=5;ctx.lineCap='round';let drawing=false;
+ const pos=e=>{const r=c.getBoundingClientRect();return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};};
+ c.onpointerdown=e=>{drawing=true;c.setPointerCapture(e.pointerId);const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);};
+ c.onpointermove=e=>{if(!drawing)return;const p=pos(e);ctx.strokeStyle=document.getElementById('quickDrawColor')?.value||'#2563eb';ctx.lineTo(p.x,p.y);ctx.stroke();};
+ c.onpointerup=c.onpointercancel=()=>drawing=false;
+}
+function clearQuickDraw(){const c=document.getElementById('quickDrawCanvas');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);}
+function exportQuickDraw(){const c=document.getElementById('quickDrawCanvas');if(!c)return;const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='croquis-kiz.png';a.click();}
+function sendKIZLocalMessage(){const input=document.getElementById('kizChatInput');const message=(input?.value||'').trim();if(!message)return showToast('Écrivez un message');state.appData=state.appData||{};state.appData.kizChatMessages=state.appData.kizChatMessages||[];state.appData.kizChatMessages.push({text:message,time:new Date().toLocaleTimeString()});save();input.value='';renderKIZLocalMessages()}
+function renderKIZLocalMessages(){const el=document.getElementById('kizChatMessages');if(!el)return;const arr=(state.appData||{}).kizChatMessages||[];el.innerHTML=arr.map(m=>`<p style="padding:8px;border-bottom:1px solid #334155"><b>Vous</b> <small>${escapeKIZ(m.time||'')}</small><br>${escapeKIZ(m.text||'')}</p>`).join('')||'Aucun message. Cette application enregistre les messages sur cet appareil.';el.scrollTop=el.scrollHeight}
+function clearKIZLocalMessages(){state.appData.kizChatMessages=[];save();renderKIZLocalMessages()}
+function saveMailDraft(){state.appData=state.appData||{};state.appData.mailDraft={to:document.getElementById('mailTo')?.value||'',subject:document.getElementById('mailSubject')?.value||'',body:document.getElementById('mailBody')?.value||''};save();renderMailDraft();showToast('Brouillon enregistré hors ligne')}
+function renderMailDraft(){const d=(state.appData||{}).mailDraft;if(!d)return;const a=document.getElementById('mailTo'),b=document.getElementById('mailSubject'),c=document.getElementById('mailBody');if(a)a.value=d.to||'';if(b)b.value=d.subject||'';if(c)c.value=d.body||'';const r=document.getElementById('mailResult');if(r)r.textContent='Brouillon conservé sur cet appareil. Aucun courriel n’est envoyé.'}
+function toggleKIZStopwatch(){if(kizStopwatchTicker){clearInterval(kizStopwatchTicker);kizStopwatchTicker=null;kizStopwatchElapsed+=Date.now()-kizStopwatchStart;return}kizStopwatchStart=Date.now();kizStopwatchTicker=setInterval(()=>{const e=document.getElementById('stopwatchDisplay');if(e)e.textContent=((kizStopwatchElapsed+Date.now()-kizStopwatchStart)/1000).toFixed(1)+' s'},100)}
+function resetKIZStopwatch(){if(kizStopwatchTicker)clearInterval(kizStopwatchTicker);kizStopwatchTicker=null;kizStopwatchElapsed=0;kizStopwatchStart=0;const e=document.getElementById('stopwatchDisplay');if(e)e.textContent='00:00.0'}
+function startKIZTimer(){stopKIZTimer();const mins=Number(document.getElementById('timerMinutes')?.value);if(!Number.isFinite(mins)||mins<=0)return showToast('Entrez un nombre de minutes valide');kizTimerRemaining=Math.round(mins*60);const tick=()=>{const el=document.getElementById('timerDisplay');if(!el){stopKIZTimer();return}const m=Math.floor(kizTimerRemaining/60),s=kizTimerRemaining%60;el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');if(kizTimerRemaining<=0){stopKIZTimer();el.textContent='Temps écoulé !';showToast('⏰ Temps écoulé')}else kizTimerRemaining--};tick();kizTimerTicker=setInterval(tick,1000)}
+function stopKIZTimer(){if(kizTimerTicker)clearInterval(kizTimerTicker);kizTimerTicker=null}
+function runScientificToolCalc(){const v=(document.getElementById('scientificInput')?.value||'').trim();const out=document.getElementById('scientificResult');if(!v)return out.textContent='Saisissez une expression.';try{if(!/^[0-9+\-*/().,%\sA-Za-z_*]+$/.test(v))throw Error('Caractères non autorisés');let x=v.replace(/\bsqrt\s*\(/gi,'Math.sqrt(').replace(/\bsin\s*\(/gi,'Math.sin(').replace(/\bcos\s*\(/gi,'Math.cos(').replace(/\btan\s*\(/gi,'Math.tan(').replace(/\blog\s*\(/gi,'Math.log10(').replace(/\bpi\b/gi,'Math.PI').replace(/\be\b/g,'Math.E').replace(/\*\*/g,'**');if(!/^[0-9+\-*/().,%\sMathsincotagqrlEPI_]+$/.test(x))throw Error('Expression non reconnue');const result=Function('"use strict"; return ('+x+')')();if(!Number.isFinite(result))throw Error('Résultat impossible');out.textContent='Résultat : '+result}catch(e){out.textContent='Expression invalide. Exemple : (12+8)/2 ou sqrt(81).'}}
+function renderKIZMiniGallery(){const el=document.getElementById('kizGalleryGrid');if(!el)return;const photos=state.photos||[];el.innerHTML=photos.map((p,i)=>`<div style="margin:8px 0"><img src="${p.data}" alt="Photo" style="max-width:100%;border-radius:8px"><button class="btn secondary" onclick="deleteKIZPhoto(${i});renderKIZMiniGallery()">Supprimer</button></div>`).join('')||'Aucune photo enregistrée.'}
+const KIZ_STORAGE_CAPACITY_MB = 64 * 1024; // 64 Go simulés
+function installedStorageMB(){return (state.installedApps||[]).reduce((sum,id)=>{const a=STORE_APPS.find(x=>x.id===id);return sum+(a?a.sizeMB||0:0)},0)}
+function virtualFilesStorageMB(){return ((state.phoneFiles||[]).reduce((n,f)=>n+(Number(f.size)||0),0)+((state.virtualDocs||[]).reduce((n,d)=>n+(Number(d.bytes)||new Blob([d.content||'']).size),0)))/1048576;}
+function virtualStorageUsedMB(){return installedStorageMB()+virtualFilesStorageMB();}
+function formatCapacityMB(mb){return mb>=1024?(mb/1024).toFixed(2)+' Go':Math.ceil(mb)+' Mo';}
+function refreshVirtualStorageUI(){const used=virtualStorageUsedMB(),pct=Math.min(100,used/KIZ_STORAGE_CAPACITY_MB*100);const el=document.getElementById('subStorage');if(el)el.textContent=formatCapacityMB(used)+' utilisés sur 64 Go ('+pct.toFixed(1)+' %) • '+(state.installedApps||[]).length+' application(s)';if(used>=KIZ_STORAGE_CAPACITY_MB*.9&&!state.storageWarningShown){state.storageWarningShown=true;save();showToast('⚠️ Stockage KIZ presque plein : '+pct.toFixed(0)+' % utilisé.');}if(used<KIZ_STORAGE_CAPACITY_MB*.85&&state.storageWarningShown){state.storageWarningShown=false;save();}}
+function saveVirtualDocument(title,content,extension='txt',source='Application'){
+ state.virtualDocs=state.virtualDocs||[];const text=String(content??'');const bytes=new Blob([text]).size;const old=state.virtualDocs.find(d=>d.title===title&&d.source===source);const used=virtualStorageUsedMB()-(old?(Number(old.bytes)||0)/1048576:0);
+ if(used+bytes/1048576>KIZ_STORAGE_CAPACITY_MB){showToast('Impossible d’enregistrer : stockage KIZ plein.');return false;}
+ const doc={id:old?.id||('vdoc-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)),title,content:text,extension,source,bytes,date:new Date().toLocaleString()};if(old)Object.assign(old,doc);else state.virtualDocs.unshift(doc);save();refreshVirtualStorageUI();return true;
+}
+function openVirtualDocument(id){const d=(state.virtualDocs||[]).find(x=>x.id===id);if(!d)return;const w=window.open('','_blank');if(w){w.document.write('<meta charset="utf-8"><title>'+escapeHTMLKIZ(d.title)+'</title><pre style="white-space:pre-wrap;font:16px sans-serif;padding:16px">'+escapeHTMLKIZ(d.content)+'</pre>');w.document.close();}else showToast('Autorisez les fenêtres pour ouvrir ce document.');}
+function exportVirtualDocument(id){const d=(state.virtualDocs||[]).find(x=>x.id===id);if(d)downloadBlob(d.title.replace(/[^a-z0-9_-]/gi,'_')+'.'+(d.extension||'txt'),d.content,d.extension==='html'?'text/html':'text/plain');}
+function deleteVirtualDocument(id){if(!confirm('Supprimer ce fichier du stockage virtuel KIZ ?'))return;state.virtualDocs=(state.virtualDocs||[]).filter(d=>d.id!==id);save();renderFiles();refreshVirtualStorageUI();}
+
+function saveAppText(id){const v=document.getElementById('wordArea')?.innerHTML||document.getElementById('docText')?.value||'';state.appData=state.appData||{};state.appData[id]=v;const title=(id==='mini-word'?'Document Mini Word':id==='notes'?'Note KIZ':'Document '+id);if(!saveVirtualDocument(title,v,id==='mini-word'?'html':'txt',id))return;save();showToast('Enregistré dans Fichiers KIZ OS');}
+function downloadBlob(name,content,type='text/plain'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function exportAppText(id,ext){const v=document.getElementById('wordArea')?.innerHTML||document.getElementById('docText')?.value||'';downloadBlob((id==='mini-word'?'document':'kiz-notes')+'.'+ext,v,ext==='html'?'text/html':'text/plain')}
+function exportCode(id){const v=document.getElementById('codeArea')?.value||'';const ext=id==='python-editor'?'py':id==='json-editor'?'json':'html';if(ext==='json'){try{JSON.parse(v)}catch(e){showToast('JSON invalide');return}}downloadBlob('kiz-code.'+ext,v,ext==='html'?'text/html':'text/plain')}
+function previewHTML(){const v=document.getElementById('codeArea')?.value||'';const w=window.open('about:blank','_blank');if(w){w.document.open();w.document.write(v);w.document.close()}else showToast('Autorisez les fenêtres pour la prévisualisation')}
+function validateJSON(){try{JSON.parse(document.getElementById('codeArea').value);document.getElementById('codeResult').textContent='JSON valide ✓'}catch(e){document.getElementById('codeResult').textContent='Erreur JSON : '+e.message}}
+function sumSheet(){const cells=[...document.querySelectorAll('#miniSheet input[data-c="1"]')].slice(1);const sum=cells.reduce((s,e)=>s+(Number(e.value)||0),0);document.getElementById('sheetResult').textContent='Somme de la colonne B : '+sum}
+function exportSheet(){const rows=[...document.querySelectorAll('#miniSheet tr')].map(tr=>[...tr.querySelectorAll('input')].map(i=>'"'+i.value.replace(/"/g,'""')+'"').join(';'));downloadBlob('mini-excel.csv',rows.join('\n'),'text/csv')}
+function loadMedia(kind){const f=document.getElementById('mediaFile')?.files?.[0];if(!f)return;const url=URL.createObjectURL(f);if(kind==='video'){const el=document.getElementById('mediaVideo');el.src=url}else{const el=document.getElementById('mediaAudio');el.src=url}}
+function openSelectedDoc(){const f=document.getElementById('docFile')?.files?.[0];if(!f)return showToast('Choisissez un fichier');if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){const u=URL.createObjectURL(f);const w=window.open(u,'_blank');if(!w)document.getElementById('filePreview').innerHTML='Le navigateur a bloqué le PDF. Autorisez les fenêtres.';return}const r=new FileReader();r.onload=()=>{document.getElementById('filePreview').textContent=String(r.result).slice(0,20000);};r.readAsText(f)}
+async function extractAudioWav(){const f=document.getElementById('convertVideoFile')?.files?.[0];if(!f)return showToast('Choisissez une vidéo MP4');const status=document.getElementById('convertStatus');const video=document.getElementById('convertVideo');video.src=URL.createObjectURL(f);status.textContent='Tentative de lecture de la piste audio…';try{const ctx=new (window.AudioContext||window.webkitAudioContext)();const buf=await ctx.decodeAudioData(await f.arrayBuffer());const channels=buf.numberOfChannels,rate=buf.sampleRate,frames=buf.length;const out=new ArrayBuffer(44+frames*channels*2),v=new DataView(out);const write=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};write(0,'RIFF');v.setUint32(4,36+frames*channels*2,true);write(8,'WAVE');write(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,channels,true);v.setUint32(24,rate,true);v.setUint32(28,rate*channels*2,true);v.setUint16(32,channels*2,true);v.setUint16(34,16,true);write(36,'data');v.setUint32(40,frames*channels*2,true);let offset=44;for(let i=0;i<frames;i++){for(let c=0;c<channels;c++){let x=Math.max(-1,Math.min(1,buf.getChannelData(c)[i]));v.setInt16(offset,x<0?x*32768:x*32767,true);offset+=2}}downloadBlob(f.name.replace(/\.[^.]+$/,'')+'.wav',out,'audio/wav');status.textContent='Extraction audio terminée : fichier WAV téléchargé. Le MP3 direct nécessite un encodeur MP3, qui n’est pas intégré dans cette version hors ligne.';await ctx.close()}catch(e){status.textContent='Le navigateur ne peut pas décoder la piste audio de ce MP4. Essayez un autre fichier ou utilisez un convertisseur MP4 vers MP3 dédié.'}}
+function saveContact(id){const name=document.getElementById('contactName')?.value.trim(),info=document.getElementById('contactInfo')?.value.trim();if(!name)return showToast('Entrez un nom');state.appData=state.appData||{};state.appData['contacts_'+id]=state.appData['contacts_'+id]||[];state.appData['contacts_'+id].push({name,info});save();renderContactList(id);showToast('Contact enregistré')}
+function renderContactList(id){const el=document.getElementById('contactList');if(!el)return;const arr=(state.appData||{})['contacts_'+id]||[];el.innerHTML=arr.map(x=>`<p><b>${escapeKIZ(x.name)}</b> — ${escapeKIZ(x.info||'')}</p>`).join('')||'Aucun contact enregistré.'}
+function saveListItem(id){const title=document.getElementById('listTitle')?.value.trim()||document.getElementById('vaultName')?.value.trim()||document.getElementById('genericText')?.value.trim()||'Élément';const details=document.getElementById('listDetails')?.value||document.getElementById('vaultText')?.value||'';state.appData=state.appData||{};state.appData['list_'+id]=state.appData['list_'+id]||[];const item={title,details,done:false,date:new Date().toLocaleString()};if(!saveVirtualDocument(title,JSON.stringify(item,null,2),'txt',id))return;state.appData['list_'+id].push(item);save();renderListItems(id);showToast('Enregistré dans Fichiers KIZ OS')}
+function renderListItems(id){const el=document.getElementById('listResult');if(!el)return;const arr=(state.appData||{})['list_'+id]||[];el.innerHTML=arr.map((x,i)=>`<div style="padding:7px 0;border-bottom:1px solid #334155"><b>${escapeKIZ(x.title)}</b><p>${escapeKIZ(x.details||'')}</p><small>${escapeKIZ(x.date||'')}</small><button class="btn-sm" onclick="toggleListItem('${id}',${i})">${x.done?'Terminé':'Cocher'}</button></div>`).join('')||'Aucun élément enregistré.'}
+function toggleListItem(id,i){const a=state.appData['list_'+id];if(a&&a[i]){a[i].done=!a[i].done;save();renderListItems(id)}}
+function runToolCalc(){const a=Number(document.getElementById('calcA').value),b=Number(document.getElementById('calcB').value),op=document.getElementById('calcOp').value;let r=op==='+'?a+b:op==='-'?a-b:op==='*'?a*b:op==='/'?(b===0?'Division impossible':a/b):b===0?'Impossible':a/b*100;document.getElementById('toolCalcResult').textContent='Résultat : '+r}
+function playMiniGame(id){let result='';if(id==='game-rps'){const x=['Pierre','Feuille','Ciseaux'][Math.floor(Math.random()*3)];result='L’ordinateur joue : '+x+'.'}else if(id==='game-coin'){result=Math.random()<.5?'Pile !':'Face !'}else if(id==='game-dice'){result='Résultat du dé : '+(1+Math.floor(Math.random()*6))}else if(id==='game-number'){const n=1+Math.floor(Math.random()*10);result='Nombre secret de cette manche : '+n+' (nouvelle manche à chaque clic).'}else if(id==='game-math'){const a=1+Math.floor(Math.random()*20),b=1+Math.floor(Math.random()*20);document.getElementById('gamePrompt').textContent=`Combien font ${a} + ${b} ?`;result='Répondez dans le champ ci-dessus; nouveau calcul : '+(a+b)}else{result='Partie lancée ! Score de démonstration : '+(1+Math.floor(Math.random()*100)+' points virtuels.')}document.getElementById('gameResult').textContent=result}
+const KIZ_DICTIONARY = (()=>{const d={};const pairs=[["hello", "bonjour"], ["goodbye", "au revoir"], ["book", "livre"], ["water", "eau"], ["house", "maison"], ["school", "école"], ["friend", "ami"], ["love", "amour"], ["computer", "ordinateur"], ["thank you", "merci"], ["good morning", "bonjour"], ["good night", "bonne nuit"], ["please", "s’il vous plaît"], ["sorry", "désolé"], ["yes", "oui"], ["no", "non"], ["maybe", "peut-être"], ["man", "homme"], ["woman", "femme"], ["boy", "garçon"], ["girl", "fille"], ["child", "enfant"], ["family", "famille"], ["father", "père"], ["mother", "mère"], ["brother", "frère"], ["sister", "sœur"], ["parent", "parent"], ["son", "fils"], ["daughter", "fille"], ["baby", "bébé"], ["people", "gens"], ["person", "personne"], ["name", "nom"], ["age", "âge"], ["life", "vie"], ["world", "monde"], ["country", "pays"], ["city", "ville"], ["village", "village"], ["street", "rue"], ["road", "route"], ["home", "maison"], ["room", "chambre"], ["door", "porte"], ["window", "fenêtre"], ["wall", "mur"], ["floor", "sol"], ["roof", "toit"], ["table", "table"], ["chair", "chaise"], ["bed", "lit"], ["desk", "bureau"], ["lamp", "lampe"], ["light", "lumière"], ["key", "clé"], ["phone", "téléphone"], ["screen", "écran"], ["computer mouse", "souris"], ["keyboard", "clavier"], ["internet", "internet"], ["file", "fichier"], ["folder", "dossier"], ["picture", "image"], ["photo", "photo"], ["video", "vidéo"], ["music", "musique"], ["song", "chanson"], ["sound", "son"], ["voice", "voix"], ["word", "mot"], ["sentence", "phrase"], ["letter", "lettre"], ["number", "nombre"], ["language", "langue"], ["french", "français"], ["english", "anglais"], ["schoolbag", "cartable"], ["pen", "stylo"], ["pencil", "crayon"], ["paper", "papier"], ["notebook", "cahier"], ["bookshop", "librairie"], ["teacher", "enseignant"], ["student", "élève"], ["lesson", "leçon"], ["class", "classe"], ["question", "question"], ["answer", "réponse"], ["exam", "examen"], ["test", "test"], ["learn", "apprendre"], ["study", "étudier"], ["read", "lire"], ["write", "écrire"], ["speak", "parler"], ["listen", "écouter"], ["understand", "comprendre"], ["remember", "se souvenir"], ["forget", "oublier"], ["think", "penser"], ["know", "savoir"], ["teach", "enseigner"], ["work", "travailler"], ["job", "emploi"], ["office", "bureau"], ["business", "entreprise"], ["shop", "magasin"], ["market", "marché"], ["money", "argent"], ["price", "prix"], ["cost", "coût"], ["buy", "acheter"], ["sell", "vendre"], ["pay", "payer"], ["free", "gratuit"], ["expensive", "cher"], ["cheap", "bon marché"], ["rich", "riche"], ["poor", "pauvre"], ["bank", "banque"], ["account", "compte"], ["save", "économiser"], ["spend", "dépenser"], ["profit", "bénéfice"], ["loss", "perte"], ["food", "nourriture"], ["bread", "pain"], ["rice", "riz"], ["meat", "viande"], ["fish", "poisson"], ["egg", "œuf"], ["milk", "lait"], ["cheese", "fromage"], ["butter", "beurre"], ["sugar", "sucre"], ["salt", "sel"], ["oil", "huile"], ["watermelon", "pastèque"], ["apple", "pomme"], ["banana", "banane"], ["orange", "orange"], ["lemon", "citron"], ["mango", "mangue"], ["pineapple", "ananas"], ["grape", "raisin"], ["fruit", "fruit"], ["vegetable", "légume"], ["tomato", "tomate"], ["potato", "pomme de terre"], ["onion", "oignon"], ["carrot", "carotte"], ["bean", "haricot"], ["corn", "maïs"], ["meal", "repas"], ["breakfast", "petit déjeuner"], ["lunch", "déjeuner"], ["dinner", "dîner"], ["hungry", "affamé"], ["thirsty", "assoiffé"], ["cook", "cuisiner"], ["kitchen", "cuisine"], ["plate", "assiette"], ["cup", "tasse"], ["spoon", "cuillère"], ["fork", "fourchette"], ["knife", "couteau"], ["clothes", "vêtements"], ["shirt", "chemise"], ["trousers", "pantalon"], ["dress", "robe"], ["skirt", "jupe"], ["shoes", "chaussures"], ["socks", "chaussettes"], ["hat", "chapeau"], ["bag", "sac"], ["watch", "montre"], ["beautiful", "beau"], ["ugly", "laid"], ["big", "grand"], ["small", "petit"], ["long", "long"], ["short", "court"], ["tall", "grand"], ["high", "haut"], ["low", "bas"], ["wide", "large"], ["narrow", "étroit"], ["new", "nouveau"], ["old", "vieux"], ["young", "jeune"], ["good", "bon"], ["bad", "mauvais"], ["better", "meilleur"], ["best", "le meilleur"], ["happy", "heureux"], ["sad", "triste"], ["angry", "fâché"], ["afraid", "effrayé"], ["tired", "fatigué"], ["strong", "fort"], ["weak", "faible"], ["fast", "rapide"], ["slow", "lent"], ["easy", "facile"], ["difficult", "difficile"], ["right", "correct"], ["wrong", "faux"], ["true", "vrai"], ["false", "faux"], ["hot", "chaud"], ["cold", "froid"], ["warm", "tiède"], ["cool", "frais"], ["clean", "propre"], ["dirty", "sale"], ["full", "plein"], ["empty", "vide"], ["open", "ouvert"], ["closed", "fermé"], ["ready", "prêt"], ["busy", "occupé"], ["free time", "temps libre"], ["important", "important"], ["possible", "possible"], ["impossible", "impossible"], ["safe", "sûr"], ["danger", "danger"], ["help", "aide"], ["problem", "problème"], ["idea", "idée"], ["plan", "plan"], ["story", "histoire"], ["truth", "vérité"], ["lie", "mensonge"], ["peace", "paix"], ["war", "guerre"], ["love story", "histoire d’amour"], ["hope", "espoir"], ["dream", "rêve"], ["future", "avenir"], ["past", "passé"], ["present", "présent"], ["time", "temps"], ["day", "jour"], ["week", "semaine"], ["month", "mois"], ["year", "année"], ["today", "aujourd’hui"], ["tomorrow", "demain"], ["yesterday", "hier"], ["morning", "matin"], ["afternoon", "après-midi"], ["evening", "soir"], ["night", "nuit"], ["hour", "heure"], ["minute", "minute"], ["second", "seconde"], ["monday", "lundi"], ["tuesday", "mardi"], ["wednesday", "mercredi"], ["thursday", "jeudi"], ["friday", "vendredi"], ["saturday", "samedi"], ["sunday", "dimanche"], ["january", "janvier"], ["february", "février"], ["march", "mars"], ["april", "avril"], ["may", "mai"], ["june", "juin"], ["july", "juillet"], ["august", "août"], ["september", "septembre"], ["october", "octobre"], ["november", "novembre"], ["december", "décembre"], ["one", "un"], ["two", "deux"], ["three", "trois"], ["four", "quatre"], ["five", "cinq"], ["six", "six"], ["seven", "sept"], ["eight", "huit"], ["nine", "neuf"], ["ten", "dix"], ["hundred", "cent"], ["thousand", "mille"], ["first", "premier"], ["last", "dernier"], ["half", "moitié"], ["all", "tout"], ["some", "quelques"], ["many", "beaucoup"], ["few", "peu"], ["more", "plus"], ["less", "moins"], ["enough", "assez"], ["very", "très"], ["too", "trop"], ["always", "toujours"], ["never", "jamais"], ["often", "souvent"], ["sometimes", "parfois"], ["usually", "habituellement"], ["here", "ici"], ["there", "là"], ["where", "où"], ["when", "quand"], ["why", "pourquoi"], ["what", "quoi"], ["who", "qui"], ["which", "lequel"], ["how", "comment"], ["because", "parce que"], ["and", "et"], ["or", "ou"], ["but", "mais"], ["if", "si"], ["with", "avec"], ["without", "sans"], ["for", "pour"], ["from", "de"], ["to", "à"], ["in", "dans"], ["on", "sur"], ["under", "sous"], ["over", "au-dessus"], ["between", "entre"], ["behind", "derrière"], ["before", "avant"], ["after", "après"], ["near", "près"], ["far", "loin"], ["inside", "à l’intérieur"], ["outside", "dehors"], ["up", "en haut"], ["down", "en bas"], ["left", "gauche"], ["right side", "côté droit"], ["north", "nord"], ["south", "sud"], ["east", "est"], ["west", "ouest"], ["sun", "soleil"], ["moon", "lune"], ["star", "étoile"], ["sky", "ciel"], ["cloud", "nuage"], ["rain", "pluie"], ["wind", "vent"], ["storm", "tempête"], ["weather", "météo"], ["fire", "feu"], ["earth", "terre"], ["air", "air"], ["tree", "arbre"], ["flower", "fleur"], ["grass", "herbe"], ["forest", "forêt"], ["river", "rivière"], ["lake", "lac"], ["sea", "mer"], ["mountain", "montagne"], ["stone", "pierre"], ["sand", "sable"], ["animal", "animal"], ["dog", "chien"], ["cat", "chat"], ["cow", "vache"], ["goat", "chèvre"], ["sheep", "mouton"], ["horse", "cheval"], ["chicken", "poule"], ["duck", "canard"], ["bird", "oiseau"], ["snake", "serpent"], ["fish tank", "aquarium"], ["lion", "lion"], ["elephant", "éléphant"], ["monkey", "singe"], ["mouse animal", "souris"], ["rabbit", "lapin"], ["turtle", "tortue"], ["bee", "abeille"], ["butterfly", "papillon"], ["ant", "fourmi"], ["mosquito", "moustique"], ["fly", "mouche"], ["body", "corps"], ["head", "tête"], ["face", "visage"], ["hair", "cheveux"], ["eye", "œil"], ["ear", "oreille"], ["nose", "nez"], ["mouth", "bouche"], ["tooth", "dent"], ["tongue", "langue"], ["neck", "cou"], ["shoulder", "épaule"], ["arm", "bras"], ["hand", "main"], ["finger", "doigt"], ["leg", "jambe"], ["knee", "genou"], ["foot", "pied"], ["heart", "cœur"], ["blood", "sang"], ["skin", "peau"], ["bone", "os"], ["health", "santé"], ["doctor", "médecin"], ["nurse", "infirmier"], ["hospital", "hôpital"], ["medicine", "médicament"], ["pain", "douleur"], ["fever", "fièvre"], ["cough", "toux"], ["rest", "repos"], ["sleep", "dormir"], ["wake up", "se réveiller"], ["walk", "marcher"], ["run", "courir"], ["jump", "sauter"], ["swim", "nager"], ["dance", "danser"], ["sing", "chanter"], ["play", "jouer"], ["watch tv", "regarder la télévision"], ["travel", "voyager"], ["drive", "conduire"], ["ride", "monter"], ["come", "venir"], ["go", "aller"], ["arrive", "arriver"], ["leave", "partir"], ["stay", "rester"], ["live", "vivre"], ["die", "mourir"], ["start", "commencer"], ["finish", "terminer"], ["stop", "arrêter"], ["continue", "continuer"], ["make", "faire"], ["do", "faire"], ["take", "prendre"], ["give", "donner"], ["bring", "apporter"], ["carry", "porter"], ["put", "mettre"], ["keep", "garder"], ["find", "trouver"], ["search", "chercher"], ["look", "regarder"], ["see", "voir"], ["show", "montrer"], ["call", "appeler"], ["send", "envoyer"], ["receive", "recevoir"], ["open door", "ouvrir"], ["close", "fermer"], ["build", "construire"], ["break", "casser"], ["fix", "réparer"], ["choose", "choisir"], ["change", "changer"], ["use", "utiliser"], ["try", "essayer"], ["wait", "attendre"], ["meet", "rencontrer"], ["visit", "visiter"], ["ask", "demander"], ["reply", "répondre"], ["explain", "expliquer"], ["agree", "être d’accord"], ["believe", "croire"], ["feel", "ressentir"], ["want", "vouloir"], ["need", "avoir besoin"], ["like", "aimer"], ["hate", "détester"], ["prefer", "préférer"], ["enjoy", "apprécier"], ["smile", "sourire"], ["laugh", "rire"], ["cry", "pleurer"], ["thank", "remercier"], ["welcome", "bienvenue"], ["congratulations", "félicitations"], ["good luck", "bonne chance"], ["be careful", "fais attention"], ["excuse me", "excusez-moi"], ["i", "je"], ["you", "tu"], ["he", "il"], ["she", "elle"], ["we", "nous"], ["they", "ils"], ["me", "moi"], ["him", "lui"], ["her", "elle"], ["us", "nous"], ["them", "eux"], ["my", "mon"], ["your", "ton"], ["his", "son"], ["our", "notre"], ["their", "leur"], ["this", "ceci"], ["that", "cela"], ["these", "ceux-ci"], ["those", "ceux-là"], ["something", "quelque chose"], ["nothing", "rien"], ["someone", "quelqu’un"], ["everyone", "tout le monde"], ["everything", "tout"], ["managing", "gestion"], ["manager", "gestionnaire"], ["employee", "employé"], ["customer", "client"], ["supplier", "fournisseur"], ["stock", "stock"], ["product", "produit"], ["service", "service"], ["receipt", "reçu"], ["invoice", "facture"], ["tax", "impôt"], ["salary", "salaire"], ["rent", "loyer"], ["expense", "dépense"], ["income", "revenu"], ["cash", "espèces"], ["card", "carte"], ["coin", "pièce"], ["bill", "billet"], ["debt", "dette"], ["loan", "prêt"], ["interest", "intérêt"], ["contract", "contrat"], ["signature", "signature"], ["rule", "règle"], ["law", "loi"], ["police", "police"], ["court", "tribunal"], ["government", "gouvernement"], ["president", "président"], ["community", "communauté"], ["church", "église"], ["faith", "foi"], ["prayer", "prière"], ["respect", "respect"], ["kindness", "gentillesse"], ["honesty", "honnêteté"], ["responsibility", "responsabilité"], ["success", "succès"], ["failure", "échec"], ["effort", "effort"], ["strength", "force"], ["power", "pouvoir"], ["energy", "énergie"], ["electricity", "électricité"], ["battery", "batterie"], ["charger", "chargeur"], ["signal", "signal"], ["network", "réseau"], ["password", "mot de passe"], ["security", "sécurité"], ["privacy", "confidentialité"], ["application", "application"], ["software", "logiciel"], ["hardware", "matériel"], ["system", "système"], ["settings", "paramètres"], ["download", "télécharger"], ["upload", "envoyer un fichier"], ["install", "installer"], ["uninstall", "désinstaller"], ["update", "mise à jour"], ["error", "erreur"], ["success message", "message de réussite"], ["button", "bouton"], ["menu", "menu"], ["search bar", "barre de recherche"], ["option", "option"], ["information", "information"], ["help desk", "assistance"], ["game", "jeu"], ["player", "joueur"], ["score", "score"], ["win", "gagner"], ["lose", "perdre"], ["draw", "match nul"], ["team", "équipe"], ["ball", "ballon"], ["football", "football"], ["goal", "but"], ["match", "match"], ["coach", "entraîneur"], ["referee", "arbitre"], ["run fast", "courir vite"], ["exercise", "exercice"], ["sport", "sport"], ["swimming", "natation"], ["basketball", "basket-ball"], ["volleyball", "volley-ball"], ["tennis", "tennis"], ["chess", "échecs"], ["card game", "jeu de cartes"], ["dice", "dé"], ["toy", "jouet"], ["gift", "cadeau"], ["party", "fête"], ["birthday", "anniversaire"], ["wedding", "mariage"], ["friendship", "amitié"], ["neighbor", "voisin"], ["guest", "invité"], ["stranger", "étranger"], ["leader", "chef"], ["teamwork", "travail d’équipe"], ["meeting", "réunion"], ["appointment", "rendez-vous"], ["message", "message"], ["letter mail", "courrier"], ["address", "adresse"], ["map", "carte"], ["station", "gare"], ["airport", "aéroport"], ["bus", "bus"], ["car", "voiture"], ["truck", "camion"], ["motorcycle", "moto"], ["bicycle", "vélo"], ["plane", "avion"], ["train", "train"], ["boat", "bateau"], ["ticket", "billet"], ["journey", "voyage"], ["holiday", "vacances"], ["hotel", "hôtel"], ["restaurant", "restaurant"], ["meal time", "heure du repas"], ["soap", "savon"], ["towel", "serviette"], ["water tap", "robinet"], ["bathroom", "salle de bain"], ["toilet", "toilettes"], ["soap powder", "lessive"], ["wash", "laver"], ["dry", "sécher"], ["iron clothes", "repasser"], ["cleaning", "nettoyage"], ["dust", "poussière"], ["garbage", "ordures"], ["bin", "poubelle"], ["garden", "jardin"], ["farm", "ferme"], ["farmer", "agriculteur"], ["field", "champ"], ["seed", "graine"], ["plant", "plante"], ["grow", "grandir"], ["harvest", "récolte"], ["soil", "sol"], ["rainfall", "précipitations"], ["tool", "outil"], ["hammer", "marteau"], ["nail", "clou"], ["rope", "corde"], ["box", "boîte"], ["bottle", "bouteille"], ["glass", "verre"], ["plastic", "plastique"], ["metal", "métal"], ["wood", "bois"], ["cloth", "tissu"], ["cotton", "coton"], ["gold", "or"], ["silver", "argent"], ["iron", "fer"], ["stone wall", "mur de pierre"], ["red", "rouge"], ["blue", "bleu"], ["green", "vert"], ["yellow", "jaune"], ["black", "noir"], ["white", "blanc"], ["gray", "gris"], ["brown", "marron"], ["pink", "rose"], ["purple", "violet"], ["color", "couleur"], ["shape", "forme"], ["circle", "cercle"], ["square", "carré"], ["triangle", "triangle"], ["line", "ligne"], ["point", "point"], ["size", "taille"], ["weight", "poids"], ["height", "hauteur"], ["length", "longueur"], ["distance", "distance"], ["meter", "mètre"], ["kilometer", "kilomètre"], ["gram", "gramme"], ["kilo", "kilo"], ["liter", "litre"], ["temperature", "température"], ["degree", "degré"], ["measure", "mesurer"], ["calculate", "calculer"], ["add", "additionner"], ["subtract", "soustraire"], ["multiply", "multiplier"], ["divide", "diviser"], ["equal", "égal"], ["result", "résultat"], ["formula", "formule"], ["science", "science"], ["maths", "mathématiques"], ["physics", "physique"], ["chemistry", "chimie"], ["biology", "biologie"], ["history", "histoire"], ["geography", "géographie"], ["art", "art"], ["music class", "cours de musique"], ["computer science", "informatique"], ["economics", "économie"], ["accounting", "comptabilité"], ["management", "gestion"], ["trade", "commerce"], ["agriculture", "agriculture"], ["environment", "environnement"], ["pollution", "pollution"], ["recycle", "recycler"], ["protect", "protéger"], ["save energy", "économiser l’énergie"], ["plastic bag", "sac plastique"], ["clean water", "eau potable"], ["fresh air", "air frais"], ["emergency", "urgence"], ["firefighter", "pompier"], ["dangerous", "dangereux"], ["accident", "accident"], ["first aid", "premiers secours"], ["fire alarm", "alarme incendie"], ["hospital bed", "lit d’hôpital"], ["medicine box", "boîte à médicaments"], ["appointment time", "heure du rendez-vous"], ["morning sun", "soleil du matin"], ["rainy", "pluvieux"], ["sunny", "ensoleillé"], ["cloudy", "nuageux"], ["windy", "venteux"], ["dry season", "saison sèche"], ["rainy season", "saison des pluies"], ["season", "saison"], ["spring", "printemps"], ["summer", "été"], ["autumn", "automne"], ["winter", "hiver"], ["weekend", "week-end"], ["weekday", "jour de semaine"], ["calendar", "calendrier"], ["clock", "horloge"], ["alarm", "alarme"], ["minute hand", "aiguille des minutes"], ["late", "en retard"], ["early", "en avance"], ["soon", "bientôt"], ["now", "maintenant"], ["again", "encore"], ["already", "déjà"], ["almost", "presque"], ["perhaps", "peut-être"], ["probably", "probablement"], ["exactly", "exactement"], ["especially", "surtout"], ["quickly", "rapidement"], ["carefully", "avec soin"], ["slowly", "lentement"], ["well", "bien"], ["badly", "mal"], ["really", "vraiment"], ["quite", "assez"], ["only", "seulement"], ["also", "aussi"], ["even", "même"], ["still", "encore"], ["yet", "pourtant"], ["therefore", "donc"], ["however", "cependant"], ["although", "bien que"], ["while", "pendant que"], ["until", "jusqu’à"], ["since", "depuis"], ["during", "pendant"], ["around", "autour"], ["through", "à travers"], ["across", "de l’autre côté"], ["along", "le long de"], ["against", "contre"], ["toward", "vers"], ["among", "parmi"], ["except", "sauf"], ["including", "y compris"], ["without doubt", "sans doute"], ["of course", "bien sûr"], ["in fact", "en fait"], ["for example", "par exemple"], ["at least", "au moins"], ["as soon as", "dès que"], ["as well", "également"], ["take care", "prends soin de toi"]];for(const [en,fr] of pairs){if(!(en in d))d[en]=fr;if(!(fr in d))d[fr]=en;}return d;})();
+function lookupWord(){const input=document.getElementById('dictWord');const out=document.getElementById('dictResult');if(!input||!out)return;const w=input.value.trim().toLocaleLowerCase('fr');const result=KIZ_DICTIONARY[w];out.textContent=result?'Traduction : '+result+'\nDictionnaire hors ligne : '+Object.keys(KIZ_DICTIONARY).length+' entrées.':'Mot absent. Vérifiez l’orthographe ou essayez une expression plus courte.';}
+function translateLocal(){const w=(document.getElementById('translateInput').value||'').trim().toLowerCase();const d={hello:'bonjour',goodbye:'au revoir',book:'livre',water:'eau',house:'maison',school:'école',friend:'ami',love:'amour',computer:'ordinateur',bonjour:'hello',merci:'thank you',livre:'book',eau:'water',maison:'house',école:'school',ami:'friend',amour:'love',ordinateur:'computer'};document.getElementById('translateResult').textContent=d[w]||'Expression non disponible hors ligne.'}
+function speakText(){const v=document.getElementById('speechText')?.value||'';if('speechSynthesis'in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(v))}else showToast('Synthèse vocale indisponible')}
+let kizRecorder=null,kizRecordChunks=[];async function startAudioRecord(){try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});kizRecordChunks=[];kizRecorder=new MediaRecorder(stream);kizRecorder.ondataavailable=e=>kizRecordChunks.push(e.data);kizRecorder.onstop=()=>{const b=new Blob(kizRecordChunks,{type:'audio/webm'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='kiz-enregistrement.webm';a.click();stream.getTracks().forEach(t=>t.stop());document.getElementById('recordResult').textContent='Enregistrement exporté.'};kizRecorder.start();showToast('Enregistrement démarré')}catch(e){showToast('Microphone indisponible ou autorisation refusée')}}function stopAudioRecord(){if(kizRecorder&&kizRecorder.state!=='inactive')kizRecorder.stop()}
+let paintEraserOn=false;
+function initPaint(){const c=document.getElementById('paintCanvas');if(!c)return;const x=c.getContext('2d');x.lineCap='round';let draw=false;function pos(e){const r=c.getBoundingClientRect();return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}}c.onpointerdown=e=>{draw=true;const p=pos(e);x.beginPath();x.moveTo(p.x,p.y);c.setPointerCapture(e.pointerId)};c.onpointermove=e=>{if(!draw)return;const p=pos(e);x.lineWidth=Number(document.getElementById('paintWidth')?.value||4);x.globalCompositeOperation=paintEraserOn?'destination-out':'source-over';x.strokeStyle=document.getElementById('paintColor')?.value||'#000';x.lineTo(p.x,p.y);x.stroke()};c.onpointerup=c.onpointercancel=()=>{draw=false;x.globalCompositeOperation='source-over'};paintEraserOn=false;const btn=document.getElementById('paintEraserBtn');if(btn)btn.textContent='🧽 Gomme : désactivée'}
+function togglePaintEraser(){paintEraserOn=!paintEraserOn;const b=document.getElementById('paintEraserBtn');if(b)b.textContent=paintEraserOn?'🧽 Gomme : activée':'🧽 Gomme : désactivée';const c=document.getElementById('paintCanvas');if(c)c.style.cursor=paintEraserOn?'cell':'crosshair'}
+function clearPaint(){const c=document.getElementById('paintCanvas');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height)}function savePaint(){const c=document.getElementById('paintCanvas');if(c){const a=document.createElement('a');a.href=c.toDataURL();a.download='dessin-kiz.png';a.click()}}function previewChosenImage(){const f=document.getElementById('imageInput')?.files?.[0];if(!f)return;const im=document.createElement('img');im.src=URL.createObjectURL(f);im.style='max-width:100%;margin-top:10px;border-radius:10px';document.getElementById('imagePreview').replaceChildren(im)}
+
+function openBrowserAddress(){let u=(document.getElementById('browserAddress')?.value||'').trim();if(!/^https?:\/\//i.test(u))u='https://'+u;if(u.length>8)window.open(u,'_blank','noopener');else showToast('Entrez une adresse valide')}
+
+/* ================= SETTINGS ================= */
+function renderSettings() {
+  document.getElementById('profileName').textContent = state.user.name || 'Utilisateur';
+  document.getElementById('profileUser').textContent = '@' + (state.user.username || 'user');
+  document.getElementById('togData').classList.toggle('on', state.data);
+  document.getElementById('togBt').classList.toggle('on', state.bt);
+  document.getElementById('togWifi').classList.toggle('on', state.wifi);
+  document.getElementById('subData').textContent = state.data ? 'Activé' : 'Désactivé - Requis pour App Store';
+  document.getElementById('subBt').textContent = state.bt ? 'Activé' : 'Désactivé';
+  document.getElementById('subWifi').textContent = state.wifi ? 'Activé' : 'Désactivé';
+  const soundToggle=document.getElementById('togSound'); if(soundToggle)soundToggle.classList.toggle('on',state.sound!==false);
+  const soundSub=document.getElementById('subSound'); if(soundSub)soundSub.textContent=state.sound===false?'Sons désactivés':'Sons activés';
+  refreshVirtualStorageUI();
+  const versionLabel=document.getElementById('osVersionLabel');if(versionLabel)versionLabel.textContent='KIZ OS v'+(state.osVersion||'1.0');
+  const count = state.installedApps.length;
+  updateStatusIcons();
+}
+
+function toggleKIZSound(){state.sound=state.sound===false;save();renderSettings();if(state.sound)playKIZTone();showToast(state.sound?'Sons activés':'Sons désactivés')}
+function playKIZTone(){if(state.sound===false)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.frequency.value=660;g.gain.value=.035;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.09);o.onended=()=>c.close()}catch(e){}}
+function restartKIZ(){save();location.reload()}
+function setCustomWallpaper(event){const f=event.target.files&&event.target.files[0];if(!f)return;if(!f.type.startsWith('image/'))return showToast('Choisissez une image');const r=new FileReader();r.onload=()=>{try{state.customWallpaper=r.result;save();applyWallpaper();showToast('Fond d’écran personnel appliqué')}catch(e){showToast('Image trop volumineuse pour le stockage local')}};r.readAsDataURL(f)}
+function toggleDarkMode(){state.darkMode=state.darkMode===false;const home=document.getElementById('home');if(home)home.style.filter=state.darkMode===false?'brightness(1.18)':'none';const t=document.getElementById('togDark');if(t)t.classList.toggle('on',state.darkMode!==false);save()}
+function applyWallpaper(){const home=document.getElementById('home');if(!home)return;if(state.customWallpaper)home.style.backgroundImage='url("'+state.customWallpaper+'")';else home.style.background=WALLPAPERS[state.wallpaper||0]}
+function toggleSetting(key) {
+  if (key === 'data') state.data = !state.data;
+  if (key === 'bt') state.bt = !state.bt;
+  if (key === 'wifi') state.wifi = !state.wifi;
+  save();
+  renderSettings();
+  updateStatusIcons();
+}
+
+function updateStatusIcons() {
+  const b = document.getElementById('icBluetooth');
+  const d = document.getElementById('icData');
+  const w = document.getElementById('icWifi');
+  if (b) b.style.opacity = state.bt ? '1' : '0.3';
+  const battery=document.getElementById('icBattery'); if(battery) battery.textContent='100% 🔋';
+  if (d) d.style.opacity = state.data ? '1' : '0.3';
+  if (w) w.style.opacity = state.wifi ? '1' : '0.3';
+}
+
+function setBrightness(v) {
+  state.brightness = parseInt(v);
+  document.getElementById('phone').style.filter = 'brightness(' + (0.4 + state.brightness/100*0.6) + ')';
+  save();
+}
+
+function changeWallpaper() {
+  state.customWallpaper='';
+  state.wallpaper = (state.wallpaper + 1) % WALLPAPERS.length;
+  document.getElementById('home').style.background = WALLPAPERS[state.wallpaper];
+  save();
+  showToast('Fond d\'écran changé');
+}
+
+function resetDevice() {
+  if (confirm('Réinitialiser complètement l\'appareil ? Toutes les données seront effacées.')) {
+    localStorage.removeItem('kizOS');
+    location.reload();
+  }
+}
+
+/* ================= CALCULATOR ================= */
+function renderCalc() {
+  const grid = document.getElementById('calcGrid');
+  const buttons = [
+    ['C','fn'],['⌫','fn'],['%','fn'],['÷','op'],
+    ['7',''],['8',''],['9',''],['×','op'],
+    ['4',''],['5',''],['6',''],['−','op'],
+    ['1',''],['2',''],['3',''],['+','op'],
+    ['±','fn'],['0',''],['.',''],['=','eq']
+  ];
+  grid.innerHTML = buttons.map(([label, cls]) =>
+    `<button class="calc-btn ${cls}" onclick="calcPress('${label}')">${label}</button>`
+  ).join('');
+}
+
+function calcPress(label) {
+  const disp = document.getElementById('calcDisplay');
+  if (label === 'C') {
+    state.calcDisplay = '0';
+    state.calcExpr = '';
+    disp.textContent = '0';
+    return;
+  }
+  if (label === '⌫') {
+    state.calcDisplay = state.calcDisplay.length > 1 ? state.calcDisplay.slice(0,-1) : '0';
+    disp.textContent = state.calcDisplay;
+    return;
+  }
+  if (label === '=') {
+    try {
+      let expr = state.calcDisplay
+        .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/%/g,'/100');
+      let result = Function('"use strict";return (' + expr + ')')();
+      if (!isFinite(result)) result = 'Erreur';
+      state.calcDisplay = String(result);
+      disp.textContent = state.calcDisplay;
+    } catch(e) {
+      disp.textContent = 'Erreur';
+      state.calcDisplay = '0';
+    }
+    return;
+  }
+  if (label === '±') {
+    if (state.calcDisplay.startsWith('-')) state.calcDisplay = state.calcDisplay.slice(1);
+    else if (state.calcDisplay !== '0') state.calcDisplay = '-' + state.calcDisplay;
+    disp.textContent = state.calcDisplay;
+    return;
+  }
+  if (['+','−','×','÷','%'].includes(label)) {
+    state.calcDisplay += label;
+  } else {
+    if (state.calcDisplay === '0' && label !== '.') state.calcDisplay = label;
+    else state.calcDisplay += label;
+  }
+  disp.textContent = state.calcDisplay;
+}
+
+/* ================= CALENDAR ================= */
+function renderCalendar() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  document.getElementById('calMonth').textContent = months[month];
+  document.getElementById('calYear').textContent = year;
+
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysPrev = new Date(year, month, 0).getDate();
+
+  const dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  let html = dayNames.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+
+  // prev month trailing
+  for (let i = firstDay - 1; i >= 0; i--) {
+    html += `<div class="cal-day other">${daysPrev - i}</div>`;
+  }
+  // this month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = (d === now.getDate());
+    html += `<div class="cal-day ${isToday ? 'today' : ''}">${d}</div>`;
+  }
+  // next month leading
+  const total = firstDay + daysInMonth;
+  const remaining = (7 - total % 7) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-day other">${i}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+/* ================= GALLERY ================= */
+function renderGallery() { renderRealGallery(); }
+
+/* ================= FILES ================= */
+function renderFiles() {
+  const list = document.getElementById('filesList');
+  if (!list) return;
+  const items = [
+    { icon:'📄', name:'Documents KIZ', size:'Dossier virtuel', fixed:true },
+    { icon:'🖼️', name:'Images', size:'Dossier virtuel', fixed:true },
+    { icon:'🎵', name:'Musique', size:'Dossier virtuel', fixed:true },
+    { icon:'📥', name:'Téléchargements', size:'Dossier virtuel', fixed:true }
+  ];
+  (state.installedApps||[]).forEach(id => {
+    const app = STORE_APPS.find(a => a.id === id);
+    if (app) items.push({ icon: app.icon, name: app.name + '.app', size: 'installé', fixed:true });
+  });
+  const phoneFiles = state.phoneFiles || [];
+  const virtualDocs = state.virtualDocs || [];
+  list.innerHTML = `<div class="tool-box"><b>Stockage KIZ : ${formatCapacityMB(virtualStorageUsedMB())} / 64 Go</b><p style="font-size:12px;margin-top:5px">Les fichiers ci-dessous sont enregistrés dans l’espace privé de KIZ OS. Les fichiers du téléphone doivent être sélectionnés manuellement.</p></div><h3 style="font-size:14px;margin:14px 0 10px">Fichiers et dossiers KIZ</h3>` + items.map(it =>
+    `<div class="file-item"><div class="fi-icon">${it.icon}</div><div class="fi-name">${it.name}</div><div class="fi-size">${it.size}</div></div>`
+  ).join('') + `<h3 style="font-size:14px;margin:20px 0 10px">Documents créés dans les applications (${virtualDocs.length})</h3>` +
+  (virtualDocs.length ? virtualDocs.map(d=>`<div class="file-item"><div class="fi-icon">📄</div><div class="fi-name" style="min-width:0;overflow-wrap:anywhere">${escapeHTMLKIZ(d.title)}<div class="fi-size">${formatFileSize(d.bytes||0)} • ${escapeHTMLKIZ(d.source||'Application')}</div></div><button class="btn-sm" onclick="openVirtualDocument('${d.id}')">Ouvrir</button><button class="btn-sm" onclick="exportVirtualDocument('${d.id}')">Exporter</button><button class="btn-sm" style="background:#b91c1c;color:#fff" onclick="deleteVirtualDocument('${d.id}')">✕</button></div>`).join('') : `<p style="font-size:12px;color:#99aabb">Aucun document créé pour le moment.</p>`) +
+  `<h3 style="font-size:14px;margin:20px 0 10px">Fichiers importés depuis le téléphone (${phoneFiles.length})</h3>` +
+  (phoneFiles.length ? phoneFiles.map(f=>`<div class="file-item"><div class="fi-icon">${fileIconFor(f.type,f.name)}</div><div class="fi-name" style="min-width:0;overflow-wrap:anywhere">${escapeHTMLKIZ(f.name)}<div class="fi-size">${formatFileSize(f.size)}</div></div><button class="btn-sm" onclick="openPhoneFile('${f.id}')">Ouvrir</button><button class="btn-sm" onclick="downloadPhoneFile('${f.id}')">Exporter</button><button class="btn-sm" style="background:#b91c1c;color:#fff" onclick="removePhoneFile('${f.id}')">✕</button></div>`).join('') : `<p style="font-size:12px;color:#99aabb">Aucun fichier importé. Utilisez le sélecteur ci-dessus.</p>`);
+}
+function formatFileSize(bytes){if(bytes<1024)return bytes+' o';if(bytes<1024*1024)return (bytes/1024).toFixed(1)+' Ko';return (bytes/1024/1024).toFixed(1)+' Mo';}
+function fileIconFor(type,name){if((type||'').startsWith('image/'))return '🖼️';if((type||'').startsWith('audio/'))return '🎵';if((type||'').startsWith('video/'))return '🎬';if((type||'').includes('pdf')||/\.pdf$/i.test(name))return '📕';return '📄';}
+let kizFileDBPromise=null;
+function openKIZFileDB(){
+ if(!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB indisponible'));
+ if(kizFileDBPromise)return kizFileDBPromise;
+ kizFileDBPromise=new Promise((resolve,reject)=>{
+  const req=indexedDB.open('KIZ_OS_Files',1);
+  req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('files'))db.createObjectStore('files',{keyPath:'id'});};
+  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ });
+ return kizFileDBPromise;
+}
+async function storeKIZFile(file,meta){
+ const db=await openKIZFileDB();
+ return new Promise((resolve,reject)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put({id:meta.id,name:meta.name,type:meta.type,blob:file});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+}
+async function getKIZFile(id){
+ const db=await openKIZFileDB();
+ return new Promise((resolve,reject)=>{const tx=db.transaction('files','readonly');const req=tx.objectStore('files').get(id);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);});
+}
+async function importPhoneFiles(event){
+ const files=Array.from(event.target.files||[]);
+ if(!files.length)return;
+ state.phoneFiles=state.phoneFiles||[];
+ let added=0;
+ for(const file of files){
+  const meta={id:'file-'+Date.now()+'-'+Math.random().toString(36).slice(2,9),name:file.name,type:file.type||'application/octet-stream',size:file.size,lastModified:file.lastModified||Date.now()};
+  if(virtualStorageUsedMB()+file.size/1048576>KIZ_STORAGE_CAPACITY_MB){showToast('Stockage KIZ plein : '+file.name+' n’a pas été importé.');continue;}
+  try{await storeKIZFile(file,meta);state.phoneFiles.push(meta);added++;}
+  catch(e){showToast('Stockage du navigateur indisponible pour '+file.name);}
+ }
+ save();renderFiles();refreshVirtualStorageUI();event.target.value='';
+ showToast(added+' fichier(s) ajouté(s) au stockage KIZ OS');
+}
+async function openPhoneFile(id){
+ try{const f=await getKIZFile(id);if(!f){showToast('Fichier introuvable dans le stockage KIZ');return;}const url=URL.createObjectURL(f.blob);const w=window.open(url,'_blank');if(!w){const a=document.createElement('a');a.href=url;a.download=f.name;a.click();}setTimeout(()=>URL.revokeObjectURL(url),60000);}
+ catch(e){showToast('Impossible d’ouvrir ce fichier dans ce navigateur');}
+}
+async function downloadPhoneFile(id){
+ try{const f=await getKIZFile(id);if(!f){showToast('Fichier introuvable');return;}const url=URL.createObjectURL(f.blob);const a=document.createElement('a');a.href=url;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+ catch(e){showToast('Export impossible');}
+}
+async function removePhoneFile(id){
+ if(!confirm('Retirer ce fichier de KIZ OS ?'))return;
+ state.phoneFiles=(state.phoneFiles||[]).filter(f=>f.id!==id);
+ try{const db=await openKIZFileDB();await new Promise((resolve,reject)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}catch(e){}
+ save();renderFiles();refreshVirtualStorageUI();
+}
+
+/* ================= KIZ SIM / ADMIN / PHOTO / BACKUP ================= */
+let cameraStream = null;
+let kizAlarmInterval = null;
+function normalizeKIZNumber(v) {
+  let n=String(v||'').replace(/\s+/g,'');
+  if(n.startsWith('+2009')) return n.slice(5);
+  if(n.startsWith('0')) return n.slice(1);
+  return n;
+}
+function formatKIZNumber() { return 'Numéro masqué — composez *103# pour le consulter'; }
+function renderPhone() { const n=document.getElementById('kizPhoneNumber'); if(n)n.textContent=formatKIZNumber(); }
+function dialKey(k) { const el=document.getElementById('ussdInput'); if(el)el.value+=k; }
+function clearUSSD() { const a=document.getElementById('ussdInput'); const b=document.getElementById('ussdResult'); if(a)a.value='';if(b)b.textContent=''; }
+function runUSSD() {
+  const el = document.getElementById('ussdInput');
+  const out = document.getElementById('ussdResult');
+  const code = (el ? el.value : '').trim();
+  let result = '';
+  const plans = Array.isArray(state.plans) ? state.plans : [];
+
+  if (code === '*100#') result = 'Solde KIZ : ' + (state.balance || 0) + ' KIZ';
+  else if (code === '*101#') result = 'Unités disponibles : ' + (state.units || 0);
+  else if (code === '*102#') result = 'SMS disponibles : ' + (state.sms || 0);
+  else if (code === '*103#') {
+    result = 'Carte SIM : KIZ\nInternational : +2009' + (state.user.number || '') + '\nLocal : 0' + (state.user.number || '');
+    const pn = document.getElementById('kizPhoneNumber');
+    if (pn) pn.textContent = 'Numéro révélé : +2009' + (state.user.number || '') + ' / 0' + (state.user.number || '');
+  } else if (code === '*104#') result = 'Internet disponible : ' + formatVirtualMB(state.megabytes || 0);
+  else if (code === '*105#') result = 'Aide USSD KIZ\n*103# : numéro KIZ\n*100# : solde\n*101# : unités\n*102# : SMS\n*104# : Internet\n*425# : forfaits Internet';
+  else if (code === '*106#') result = 'Votre numéro KIZ : +2009' + (state.user.number || '') + '\nFormat local : 0' + (state.user.number || '');
+  else if (code === '*425#') {
+    if (!plans.length) {
+      result = 'Aucun forfait Internet disponible.\nCréez d’abord un forfait dans Administration KIZ.';
+    } else {
+      result = 'FORFAITS INTERNET KIZ\nSolde : ' + (state.balance || 0) + ' KIZ\n\n' +
+        plans.map((p, i) => (i + 1) + '. ' + p.name + ' — ' + p.qty + ' ' + (p.unit === 'GB' ? 'Go' : 'Mo') + ' — ' + p.price + ' KIZ' +
+          (Number(p.duration) === 0 ? ' — sans expiration' : ' — ' + p.duration + ' jour(s)')).join('\n') +
+        '\n\nPour acheter : saisissez ACHAT 1 ou composez *425*1#.\nRemplacez 1 par le numéro du forfait choisi.';
+    }
+  } else {
+    const buyMatch = code.match(/^ACHAT\s+(\d+)$/i) || code.match(/^\*425\*(\d+)#$/);
+    if (buyMatch) {
+      const index = Number(buyMatch[1]) - 1;
+      const p = plans[index];
+      if (!p) result = 'Numéro de forfait invalide. Composez *425# pour voir la liste.';
+      else {
+        const price = Number(p.price);
+        const qty = Number(p.qty);
+        const unit = String(p.unit || 'MB').toUpperCase();
+        if (!Number.isFinite(price) || price < 0 || !Number.isFinite(qty) || qty <= 0) {
+          result = 'Ce forfait contient des informations invalides. Demandez à l’administration de le vérifier.';
+        } else if ((state.balance || 0) < price) {
+          result = 'Solde KIZ insuffisant.\nPrix : ' + price + ' KIZ\nVotre solde : ' + (state.balance || 0) + ' KIZ';
+        } else {
+          state.balance = (state.balance || 0) - price;
+          const boughtMB = unit === 'GB' || unit === 'GO' ? qty * 1024 : qty;
+          state.megabytes = (state.megabytes || 0) + boughtMB;
+          state.transactions = state.transactions || [];
+          state.transactions.push({type:'Achat forfait Internet',name:p.name,amount:qty,unit:unit,date:Date.now(),price:price});
+          save();
+          updateHomeResources();
+          result = 'ACHAT RÉUSSI ✓\nForfait : ' + p.name + '\nInternet ajouté : ' + formatVirtualMB(boughtMB) +
+            '\nInternet total : ' + formatVirtualMB(state.megabytes) + '\nArgent restant : ' + state.balance + ' KIZ';
+        }
+      }
+    } else if (code === '*150#') result = 'Le transfert virtuel sera ajouté dans une prochaine version.';
+    else if (code === '*151#') result = 'Transfert d’unités : fonction en cours de développement.';
+    else if (code === '*152#') result = 'SMS KIZ : ' + (state.sms || 0) + ' disponibles.';
+    else if (code === '*200#') result = 'Appels KIZ : appels fictifs dans la simulation.';
+    else if (code === '*500#') result = 'Matchs KIZ : fonction de démonstration.';
+    else result = 'Code KIZ inconnu. Essayez *100#, *101#, *102#, *103#, *104#, *105#, *106# ou *425#.';
+  }
+  if (out) out.textContent = result;
+}
+function formatVirtualMB(mb){return mb>=1024?(mb/1024).toFixed(2)+' Go':mb+' Mo';}
+function adminLogin(){
+  openScreen('kizadmin');
+  document.getElementById('adminBody').innerHTML='<div class="settings-group"><div class="settings-group-title">Accès protégé</div><p style="font-size:13px;color:#aab8d0;margin-bottom:12px">Entrez un code administrateur pour gérer les ressources virtuelles KIZ.</p><input id="adminPin" type="password" inputmode="numeric" maxlength="4" placeholder="Code administrateur" style="width:100%;padding:13px;border-radius:12px;background:#111a31;color:#fff;border:1px solid #334155"><button class="btn" onclick="checkKIZAdmin()">Déverrouiller</button></div>';
+}
+function checkKIZAdmin(){
+  const pin=document.getElementById('adminPin').value;
+  if(pin!=='2771'&&pin!=='2802'){showToast('Code incorrect — accès refusé');return;}
+  renderKIZAdmin();
+}
+function renderKIZAdmin(){
+  document.getElementById('adminBody').innerHTML=`<div class="settings-group"><div class="settings-group-title">Créer une ressource</div>
+  <label>Commande KIZ</label><select id="adminCommand" style="width:100%;padding:12px;border-radius:10px;background:#111a31;color:#fff"><option value="mega">&lt;KIZ&gt;mega&lt;/KIZ OS&gt;</option><option value="argent">&lt;KIZ&gt;argent&lt;/KIZ OS&gt;</option><option value="unites">&lt;KIZ&gt;unites&lt;/KIZ OS&gt;</option><option value="sms">&lt;KIZ&gt;sms&lt;/KIZ OS&gt;</option></select>
+  <label>Nom</label><input id="adminName" placeholder="Ex. KIZ Mini" style="width:100%;padding:12px;border-radius:10px;background:#111a31;color:#fff">
+  <label>Quantité</label><input id="adminQty" type="number" min="1" placeholder="Quantité" style="width:100%;padding:12px;border-radius:10px;background:#111a31;color:#fff">
+  <label>Unité</label><select id="adminUnit" style="width:100%;padding:12px;border-radius:10px;background:#111a31;color:#fff"><option value="MB">Mo</option><option value="GB">Go</option><option value="KIZ">KIZ</option><option value="UNIT">Unités</option><option value="SMS">SMS</option></select>
+  <label>Prix en KIZ (forfaits uniquement)</label><input id="adminPrice" type="number" min="0" value="0" style="width:100%;padding:12px;border-radius:10px;background:#111a31;color:#fff">
+  <label>Validité</label><select id="adminDuration" style="width:100%;padding:12px;border-radius:10px;background:#111a31;color:#fff"><option value="1">1 jour</option><option value="7">7 jours</option><option value="15">15 jours</option><option value="30">30 jours</option><option value="0">Sans expiration</option></select>
+  <button class="btn" onclick="createKIZResource()">Créer</button></div>
+  <div class="settings-group"><div class="settings-group-title">Soldes du compte actuel</div><div class="settings-item"><div class="si-text"><div class="si-title">Internet</div><div class="si-sub">${formatVirtualMB(state.megabytes||0)}</div></div></div><div class="settings-item"><div class="si-text"><div class="si-title">Argent</div><div class="si-sub">${state.balance||0} KIZ</div></div></div><div class="settings-item"><div class="si-text"><div class="si-title">Unités / SMS</div><div class="si-sub">${state.units||0} unités • ${state.sms||0} SMS</div></div></div></div>
+  <div class="settings-group"><div class="settings-group-title">Forfaits créés</div>${(state.plans||[]).map((p,i)=>`<div class="settings-item"><div class="si-text"><div class="si-title">${escapeKIZ(p.name)}</div><div class="si-sub">${p.qty} ${p.unit} • ${p.price} KIZ • ${p.duration===0?'Sans expiration':p.duration+' jour(s)'}</div></div><button class="btn-sm" onclick="deleteKIZPlan(${i})">Supprimer</button></div>`).join('')||'<p style="font-size:12px;color:#99aabb">Aucun forfait créé.</p>'}</div>`;
+}
+function escapeKIZ(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function createKIZResource(){
+  const type = document.getElementById('adminCommand')?.value;
+  const name = (document.getElementById('adminName')?.value || '').trim();
+  const qtyText = document.getElementById('adminQty')?.value;
+  const qty = Number(qtyText);
+  const unit = document.getElementById('adminUnit')?.value || 'MB';
+  const priceText = document.getElementById('adminPrice')?.value;
+  const price = Number(priceText);
+  const duration = Number(document.getElementById('adminDuration')?.value || 0);
+
+  if (!type || !name || qtyText === '' || !Number.isFinite(qty) || qty <= 0) {
+    showToast('Saisissez un nom et une quantité supérieure à zéro');
+    return;
+  }
+
+  if (type === 'mega') {
+    if (priceText === '' || !Number.isFinite(price) || price < 0) {
+      showToast('Indiquez un prix valide en KIZ pour ce forfait');
+      return;
+    }
+    const dataUnit = unit === 'GB' ? 'GB' : 'MB';
+    state.plans = Array.isArray(state.plans) ? state.plans : [];
+    state.plans.push({
+      id: 'KIZ-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+      name,
+      qty: Math.round(qty * 100) / 100,
+      unit: dataUnit,
+      price: Math.round(price),
+      duration: Number.isFinite(duration) ? duration : 0,
+      createdAt: Date.now()
+    });
+    save();
+    showToast('Forfait Internet créé avec succès');
+    renderKIZAdmin();
+    return;
+  }
+
+  if (type === 'argent') {
+    state.balance = (state.balance || 0) + qty;
+    state.transactions.push({type:'Création argent',name,qty,unit:'KIZ',date:Date.now()});
+  } else if (type === 'unites') {
+    state.units = (state.units || 0) + qty;
+    state.transactions.push({type:'Création unités',name,qty,unit:'UNIT',date:Date.now()});
+  } else if (type === 'sms') {
+    state.sms = (state.sms || 0) + qty;
+    state.transactions.push({type:'Création SMS',name,qty,unit:'SMS',date:Date.now()});
+  } else {
+    showToast('Type de ressource inconnu');
+    return;
+  }
+  save();
+  showToast('Ressource KIZ créée');
+  renderKIZAdmin();
+}
+function deleteKIZPlan(i){if(confirm('Supprimer ce forfait du catalogue ?')){state.plans.splice(i,1);save();renderKIZAdmin();}}
+function backupKIZ(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='KIZ_OS_sauvegarde.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);showToast('Sauvegarde exportée');
+}
+function restoreKIZ(event){
+  const f=event.target.files&&event.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const d=JSON.parse(reader.result);if(!d.user||typeof d.setupDone!=='boolean')throw Error('invalid');if(!confirm('Remplacer les données KIZ actuelles par cette sauvegarde ?'))return;Object.assign(state,d);save();location.reload();}catch(e){showToast('Fichier de sauvegarde invalide');}};reader.readAsText(f);
+}
+async function startCamera(){
+  try{if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw Error('unsupported');cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});document.getElementById('cameraVideo').srcObject=cameraStream;}
+  catch(e){showToast('Caméra indisponible : autorisez la caméra et utilisez HTTPS ou l’APK compatible.');}
+}
+function stopCamera(){if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}}
+function takePhoto(){
+  const video=document.getElementById('cameraVideo');if(!video||!video.videoWidth){showToast('Ouvrez d’abord la caméra');return;}
+  const canvas=document.getElementById('cameraCanvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d').drawImage(video,0,0);
+  try{const photo={id:'photo-'+Date.now(),data:canvas.toDataURL('image/jpeg',0.78),date:Date.now()};state.photos=state.photos||[];state.photos.unshift(photo);if(state.photos.length>30)state.photos=state.photos.slice(0,30);save();showToast('Photo enregistrée dans la galerie KIZ');}catch(e){showToast('Stockage insuffisant pour enregistrer la photo');}
+}
+function setKIZAlarm(){const input=document.getElementById('alarmTime');if(!input||!input.value){showToast('Choisissez une heure');return;}if(kizAlarmInterval)clearInterval(kizAlarmInterval);const target=input.value;document.getElementById('alarmStatus').textContent='Alarme activée : '+target;kizAlarmInterval=setInterval(()=>{const d=new Date();const now=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');if(now===target){showToast('⏰ Il est '+target);try{navigator.vibrate&&navigator.vibrate([300,150,300]);}catch(e){}alert('KIZ OS — Alarme : '+target);cancelKIZAlarm();}},1000);}
+function cancelKIZAlarm(){if(kizAlarmInterval)clearInterval(kizAlarmInterval);kizAlarmInterval=null;const e=document.getElementById('alarmStatus');if(e)e.textContent='Aucune alarme activée.';}
+function renderRealGallery(){
+ const grid=document.getElementById('galleryGrid');if(!grid)return;const photos=state.photos||[];
+ if(!photos.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:28px;color:#99aabb">Aucune photo. Ouvrez Appareil photo pour en prendre une.</div>';return;}
+ grid.innerHTML=photos.map((p,i)=>`<div class="g-item" style="background:#111a31;position:relative;overflow:hidden"><img src="${p.data}" alt="Photo KIZ" style="width:100%;height:100%;object-fit:cover" onclick="viewKIZPhoto(${i})"><button onclick="deleteKIZPhoto(${i})" style="position:absolute;right:2px;top:2px;background:#dc2626;border:0;border-radius:6px;color:#fff">×</button></div>`).join('');
+}
+function viewKIZPhoto(i){const p=(state.photos||[])[i];if(!p)return;const w=window.open();if(w)w.document.write('<img style="max-width:100%" src="'+p.data+'">');}
+function deleteKIZPhoto(i){if(confirm('Supprimer cette photo de la galerie KIZ ?')){state.photos.splice(i,1);save();renderRealGallery();}}
+function escapeHTMLKIZ(t){return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* ================= TOAST ================= */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ================= JEUX ET VLC-MINI ================= */
+let snakeTimer=null,snakeCells=[],snakeFood=null,snakeDir={x:1,y:0},snakeNextDir={x:1,y:0},snakeScoreValue=0,snakeRunning=false;
+function stopSnakeGame(){if(snakeTimer)clearInterval(snakeTimer);snakeTimer=null;snakeRunning=false;}
+function startSnakeGame(){stopSnakeGame();const c=document.getElementById('snakeCanvas');if(!c)return;snakeCells=[{x:7,y:8},{x:6,y:8},{x:5,y:8}];snakeDir={x:1,y:0};snakeNextDir={x:1,y:0};snakeScoreValue=0;snakeFood={x:13,y:10};snakeRunning=true;drawSnake();snakeTimer=setInterval(stepSnake,145);}
+function snakeTurn(x,y){if(x===-snakeDir.x&&y===-snakeDir.y)return;snakeNextDir={x,y};}
+function stepSnake(){if(!snakeRunning)return;snakeDir=snakeNextDir;const c=document.getElementById('snakeCanvas');if(!c){stopSnakeGame();return;}const cols=16,rows=16,head={x:snakeCells[0].x+snakeDir.x,y:snakeCells[0].y+snakeDir.y};if(head.x<0||head.y<0||head.x>=cols||head.y>=rows||snakeCells.some((p,i)=>i>0&&p.x===head.x&&p.y===head.y)){stopSnakeGame();showToast('Partie terminée • Score : '+snakeScoreValue);return;}snakeCells.unshift(head);if(head.x===snakeFood.x&&head.y===snakeFood.y){snakeScoreValue+=10;do{snakeFood={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}while(snakeCells.some(p=>p.x===snakeFood.x&&p.y===snakeFood.y));}else snakeCells.pop();drawSnake();}
+function drawSnake(){const c=document.getElementById('snakeCanvas');if(!c)return;const ctx=c.getContext('2d'),cell=c.width/16;ctx.fillStyle='#081322';ctx.fillRect(0,0,c.width,c.height);ctx.strokeStyle='#17283c';for(let i=0;i<=16;i++){ctx.beginPath();ctx.moveTo(i*cell,0);ctx.lineTo(i*cell,c.height);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*cell);ctx.lineTo(c.width,i*cell);ctx.stroke();}if(snakeFood){ctx.fillStyle='#ff5964';ctx.beginPath();ctx.arc((snakeFood.x+.5)*cell,(snakeFood.y+.5)*cell,cell*.32,0,Math.PI*2);ctx.fill();}snakeCells.forEach((p,i)=>{ctx.fillStyle=i?'#22c55e':'#86efac';ctx.fillRect(p.x*cell+2,p.y*cell+2,cell-4,cell-4);});const score=document.getElementById('snakeScore');if(score)score.textContent='Score : '+snakeScoreValue;}
+window.addEventListener('keydown',e=>{const c=document.getElementById('snakeCanvas');if(!c)return;const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};if(map[e.key]){e.preventDefault();snakeTurn(...map[e.key]);}});
+let tttBoard=[],tttTurn='X',tttScores={X:0,O:0,draw:0},tttOver=false;
+function initTicTacToe(){resetTicTacToe();}
+function resetTicTacToe(){tttBoard=Array(9).fill('');tttTurn='X';tttOver=false;renderTicTacToe();}
+function renderTicTacToe(){const board=document.getElementById('tttBoard');if(!board)return;board.innerHTML=tttBoard.map((v,i)=>`<button class="btn" style="height:76px;font-size:32px;margin:0;background:${v==='X'?'#1d4ed8':v==='O'?'#047857':'#24334f'}" onclick="playTicTacToe(${i})" ${v||tttOver?'disabled':''}>${v||'·'}</button>`).join('');const status=document.getElementById('tttStatus');if(status)status.textContent=tttOver?'Partie terminée. Appuyez sur Nouvelle partie.':'Au tour de '+tttTurn;const score=document.getElementById('tttScore');if(score)score.textContent=`X : ${tttScores.X} • O : ${tttScores.O} • Nuls : ${tttScores.draw}`;}
+function playTicTacToe(i){if(tttOver||tttBoard[i])return;tttBoard[i]=tttTurn;const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];const winner=wins.some(line=>line.every(j=>tttBoard[j]===tttTurn));if(winner){tttScores[tttTurn]++;tttOver=true;showToast('Le joueur '+tttTurn+' a gagné !');}else if(tttBoard.every(Boolean)){tttScores.draw++;tttOver=true;showToast('Match nul !');}else tttTurn=tttTurn==='X'?'O':'X';renderTicTacToe();}
+function loadVLCMini(kind){const input=document.getElementById(kind==='video'?'vlcVideoFile':'vlcAudioFile');const player=document.getElementById(kind==='video'?'vlcVideo':'vlcAudio');if(!input?.files?.[0]||!player)return;player.src=URL.createObjectURL(input.files[0]);player.load();}
+/* Jeu de mémoire : 16 cartes, 8 paires, sons générés localement */
+let memoryCards=[],memoryOpen=[],memoryMatched=[],memoryFound=0,memoryMoves=0,memoryLocked=false;
+function playMemorySound(kind){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ctx=new AC();const notes=kind==='match'?[660,880]:kind==='miss'?[220,165]:kind==='win'?[523,659,784,1047]:[420];let t=ctx.currentTime;notes.forEach((freq,i)=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=freq;gain.gain.setValueAtTime(0.0001,t+i*0.11);gain.gain.exponentialRampToValueAtTime(0.16,t+i*0.11+0.015);gain.gain.exponentialRampToValueAtTime(0.0001,t+i*0.11+0.12);osc.connect(gain);gain.connect(ctx.destination);osc.start(t+i*0.11);osc.stop(t+i*0.11+0.13)});setTimeout(()=>ctx.close().catch(()=>{}),900)}catch(e){}}
+function startMemoryGame(){const b=document.getElementById('memoryBoard');if(!b)return;const icons=['🍎','🚗','🐱','⚽','🌞','📚','🎵','🏠'];memoryCards=[...icons,...icons].sort(()=>Math.random()-.5);memoryOpen=[];memoryMatched=[];memoryFound=0;memoryMoves=0;memoryLocked=false;renderMemory();}
+function renderMemory(){const b=document.getElementById('memoryBoard');if(!b)return;b.innerHTML=memoryCards.map((v,i)=>`<button class="btn" aria-label="Carte ${i+1}" style="height:58px;font-size:24px;margin:0" onclick="flipMemory(${i})">${memoryMatched.includes(i)||memoryOpen.includes(i)?v:'❔'}</button>`).join('');const st=document.getElementById('memoryStatus');if(st)st.textContent='Paires trouvées : '+memoryFound+' / 8 • Coups : '+memoryMoves;}
+function flipMemory(i){if(memoryLocked||memoryOpen.includes(i)||memoryMatched.includes(i))return;memoryOpen.push(i);playMemorySound('flip');renderMemory();if(memoryOpen.length===2){memoryMoves++;const [a,b]=memoryOpen;if(memoryCards[a]===memoryCards[b]){memoryMatched.push(a,b);memoryFound++;memoryOpen=[];playMemorySound(memoryFound===8?'win':'match');renderMemory();if(memoryFound===8){const st=document.getElementById('memoryStatus');if(st)st.textContent='🎉 Bravo ! Toutes les paires trouvées en '+memoryMoves+' coups.';showToast('Bravo ! Toutes les paires trouvées.');}}else{memoryLocked=true;playMemorySound('miss');setTimeout(()=>{memoryOpen=[];memoryLocked=false;renderMemory();},850);}}}
+let grid2048=[],score2048=0;
+function start2048(){if(!document.getElementById('g2048Board'))return;grid2048=Array(16).fill(0);score2048=0;add2048Tile();add2048Tile();render2048();}
+function add2048Tile(){const empty=grid2048.map((v,i)=>v? -1:i).filter(i=>i>=0);if(empty.length)grid2048[empty[Math.floor(Math.random()*empty.length)]]=Math.random()<.9?2:4;}
+function render2048(){const b=document.getElementById('g2048Board');if(!b)return;b.innerHTML=grid2048.map(v=>`<div style="height:58px;border-radius:7px;display:grid;place-items:center;background:${v?'#d6b98c':'#334155'};color:#182235;font-size:20px;font-weight:bold">${v||''}</div>`).join('');const sc=document.getElementById('g2048Score');if(sc)sc.textContent='Score : '+score2048;}
+function move2048(dx,dy){if(!grid2048.length)return;let changed=false;for(let line=0;line<4;line++){let idx=[];for(let k=0;k<4;k++)idx.push(dx===-1?line*4+k:dx===1?line*4+3-k:dy===-1?k*4+line:(3-k)*4+line);let vals=idx.map(i=>grid2048[i]).filter(Boolean),out=[];for(let j=0;j<vals.length;j++){if(vals[j]===vals[j+1]){out.push(vals[j]*2);score2048+=vals[j]*2;j++;}else out.push(vals[j]);}while(out.length<4)out.push(0);idx.forEach((i,k)=>{if(grid2048[i]!==out[k])changed=true;grid2048[i]=out[k];});}if(changed)add2048Tile();render2048();if(grid2048.includes(2048))showToast('Bravo, vous avez atteint 2048 !');}
+window.addEventListener('keydown',e=>{if(!document.getElementById('g2048Board'))return;const m={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};if(m[e.key]){e.preventDefault();move2048(...m[e.key]);}});
+const kizQuizItems=[['Quelle est la capitale de la RDC ?',['Kinshasa','Lubumbashi','Kasenga'],'Kinshasa'],['Combien font 7 × 8 ?',['54','56','64'],'56'],['Quelle planète est appelée planète rouge ?',['Vénus','Mars','Jupiter'],'Mars'],['Quel organe pompe le sang ?',['Poumon','Cœur','Foie'],'Cœur'],['Combien de jours dans une semaine ?',['5','7','10'],'7'],['Quel est le contraire de chaud ?',['Froid','Grand','Lent'],'Froid']];let quizScoreValue=0,quizIndex=0;
+function nextKIZQuiz(){const q=document.getElementById('quizQuestion'),c=document.getElementById('quizChoices');if(!q||!c)return;const item=kizQuizItems[quizIndex++%kizQuizItems.length];q.textContent=item[0];c.innerHTML=item[1].map(v=>`<button class="btn secondary" style="margin:4px" onclick="answerKIZQuiz('${v.replace(/'/g,"\\'")}','${item[2].replace(/'/g,"\\'")}')">${v}</button>`).join('');const sc=document.getElementById('quizScore');if(sc)sc.textContent='Score : '+quizScoreValue;}
+function answerKIZQuiz(a,b){if(a===b){quizScoreValue++;showToast('Bonne réponse !');}else showToast('Réponse correcte : '+b);nextKIZQuiz();}
+let mathExpected=0,mathPoints=0;function newKIZMath(){if(!document.getElementById('mathQuestion'))return;const a=1+Math.floor(Math.random()*20),b=1+Math.floor(Math.random()*12),op=Math.random()<.5?'+':'×';mathExpected=op==='+'?a+b:a*b;document.getElementById('mathQuestion').textContent=`${a} ${op} ${b} = ?`;document.getElementById('mathAnswer').value='';document.getElementById('mathResult').textContent='';document.getElementById('mathScore').textContent='Score : '+mathPoints;}
+function checkKIZMath(){const v=Number(document.getElementById('mathAnswer')?.value);const r=document.getElementById('mathResult');if(v===mathExpected){mathPoints++;r.textContent='Correct !';}else r.textContent='Pas tout à fait. Réponse : '+mathExpected;document.getElementById('mathScore').textContent='Score : '+mathPoints;}
+const scrambleWords=['maison','ordinateur','bonjour','famille','école','amitié','soleil','livre','musique','voiture'];let scrambleTarget='';function newScrambleWord(){if(!document.getElementById('scrambleLetters'))return;scrambleTarget=scrambleWords[Math.floor(Math.random()*scrambleWords.length)];let mixed=scrambleTarget.split('').sort(()=>Math.random()-.5).join('');if(mixed===scrambleTarget)mixed=scrambleTarget.slice(1)+scrambleTarget[0];document.getElementById('scrambleLetters').textContent=mixed.toUpperCase();document.getElementById('scrambleAnswer').value='';document.getElementById('scrambleResult').textContent='';}
+function checkScrambleWord(){const a=document.getElementById('scrambleAnswer').value.trim().toLowerCase();document.getElementById('scrambleResult').textContent=a===scrambleTarget?'Bravo, bonne réponse !':'Essayez encore. Indice : '+scrambleTarget.length+' lettres.';}
+let reactionTimer=null,reactionStarted=0,reactionReady=false;function startReactionTest(){const b=document.getElementById('reactionButton'),m=document.getElementById('reactionMessage'),r=document.getElementById('reactionResult');if(!b)return;clearTimeout(reactionTimer);reactionReady=false;b.textContent='Attendez…';b.style.background='#b45309';m.textContent='Touchez seulement lorsque le bouton devient vert.';r.textContent='';reactionTimer=setTimeout(()=>{if(!document.getElementById('reactionButton'))return;reactionReady=true;reactionStarted=performance.now();b.textContent='MAINTENANT !';b.style.background='#16a34a';b.onclick=()=>{if(!reactionReady)return;const ms=Math.round(performance.now()-reactionStarted);reactionReady=false;b.onclick=startReactionTest;b.textContent='Recommencer';b.style.background='';r.textContent='Votre temps de réaction : '+ms+' ms';};},1000+Math.random()*2500);}
+let puzzleExpected=0;function newKIZPuzzle(){if(!document.getElementById('puzzleQuestion'))return;const n=2+Math.floor(Math.random()*8),step=2+Math.floor(Math.random()*6);puzzleExpected=n+step*4;document.getElementById('puzzleQuestion').textContent=[n,n+step,n+step*2,n+step*3,'?'].join('  •  ');document.getElementById('puzzleAnswer').value='';document.getElementById('puzzleResult').textContent='';}
+function checkKIZPuzzle(){document.getElementById('puzzleResult').textContent=Number(document.getElementById('puzzleAnswer').value)===puzzleExpected?'Exact !':'Réessayez : observez l’écart entre les nombres.';}
+
+function checkKIZOSUpdate(){
+ const now=Date.now(), last=Number(state.osLastUpdate||0);
+ if(!last){state.osLastUpdate=now;state.osVersion=state.osVersion||'1.0';save();return;}
+ const threeDays=3*24*60*60*1000;
+ if(now-last<threeDays || state.updatePromptAt && now-state.updatePromptAt<24*60*60*1000)return;
+ state.updatePromptAt=now;save();
+ setTimeout(()=>{
+  if(!confirm('Mise à jour KIZ OS disponible. Voulez-vous installer cette mise à jour virtuelle ? Elle actualise la version simulée et affiche les applications prévues pour cette version.'))return;
+  const parts=String(state.osVersion||'1.0').split('.').map(Number);parts[1]=(parts[1]||0)+1;state.osVersion=parts[0]+'.'+parts[1];state.osLastUpdate=Date.now();state.hiddenAppsUnlocked=true;save();
+  const about=document.querySelector('#settings .settings-group-title');
+  showToast('KIZ OS mis à jour vers la version '+state.osVersion+' (simulation)');renderSettings();renderStore();
+ },1200);
+}
+
+/* ================= INIT ================= */
+function init() {
+  load();
+  state.user = state.user || {name:'',username:'',number:''};
+  state.plans = state.plans || []; state.photos = state.photos || []; state.transactions = state.transactions || []; state.phoneFiles = state.phoneFiles || []; state.virtualDocs = state.virtualDocs || []; state.appData = state.appData || {}; state.osVersion=state.osVersion||'1.0';
+  if(state.setupDone && (!state.user.number || !/^(70|79|77)\d{6}$/.test(state.user.number))){state.user.number=generateKIZNumber();if(!state.welcomeGiven){state.megabytes=2048;state.welcomeGiven=true;}save();}
+
+  // Apply wallpaper
+  document.getElementById('home').style.background = WALLPAPERS[state.wallpaper] || WALLPAPERS[0];
+
+  // Brightness
+  if (state.brightness) {
+    document.getElementById('phone').style.filter = 'brightness(' + (0.4 + state.brightness/100*0.6) + ')';
+    const br = document.getElementById('brightness');
+    if (br) br.value = state.brightness;
+  }
+
+  updateStatusIcons();
+
+  if (state.setupDone) {
+    document.getElementById('setup').classList.remove('active');
+    document.getElementById('statusbar').style.display = 'flex';
+    showHome();
+  } else {
+    // setup
+    document.getElementById('statusbar').style.display = 'none';
+  }
+
+  updateClock();
+  updateClockScreen();
+  refreshVirtualStorageUI();
+  checkKIZOSUpdate();
+}
+
+window.addEventListener('keydown', e => { if(e.key==='Escape' || e.key==='Backspace' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){ if(document.getElementById('kizadmin').classList.contains('active')) openScreen('settings'); else goHome(); } });
+window.addEventListener('popstate', () => { goHome(); });
+history.pushState({kizOS:true}, '', '#kiz-os');
+init();
+</script>
+</body>
+</html>
