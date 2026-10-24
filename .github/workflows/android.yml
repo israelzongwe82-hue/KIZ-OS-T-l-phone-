@@ -60,8 +60,7 @@ jobs:
           {
             "appId": "com.israelzongwe.kizos",
             "appName": "KIZ OS",
-            "webDir": "www",
-            "bundledWebRuntime": false
+            "webDir": "www"
           }
           EOF
 
