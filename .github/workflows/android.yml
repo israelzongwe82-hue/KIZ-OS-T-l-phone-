@@ -43,18 +43,19 @@ jobs:
         run: |
           test -f index.html
           test -f images/icon.png
-          echo "Fichiers de KIZ OS vérifiés."
+          test -f images/splash.png
+          echo "Les fichiers HTML, icône et splash sont présents."
 
-      - name: Préparer le projet
+      - name: Préparer les fichiers Web
         run: |
           mkdir -p www/images
           cp index.html www/index.html
           cp -r images/. www/images/
 
-      - name: Installer Capacitor
+      - name: Installer Capacitor et les ressources Android
         run: |
           npm init -y
-          npm install @capacitor/core@7 @capacitor/android@7 @capacitor/cli@7
+          npm install @capacitor/core@7 @capacitor/android@7 @capacitor/cli@7 @capacitor/assets@3 @capacitor/splash-screen@7
 
       - name: Configurer KIZ OS
         run: |
@@ -63,15 +64,41 @@ jobs:
             "appId": "cd.kizstudio.kizos",
             "appName": "KIZ OS",
             "webDir": "www",
-            "bundledWebRuntime": false
+            "bundledWebRuntime": false,
+            "plugins": {
+              "SplashScreen": {
+                "launchShowDuration": 2500,
+                "launchAutoHide": true,
+                "backgroundColor": "#101820",
+                "showSpinner": false,
+                "androidScaleType": "CENTER_CROP",
+                "splashFullScreen": true,
+                "splashImmersive": true
+              }
+            }
           }
           EOF
+
+      - name: Préparer les images de l'application
+        run: |
+          mkdir -p assets
+          cp images/icon.png assets/icon.png
+          cp images/splash.png assets/splash.png
 
       - name: Ajouter Android
         run: npx cap add android
 
+      - name: Générer les icônes et le splash Android
+        run: npx capacitor-assets generate --android
+
       - name: Synchroniser les fichiers
         run: npx cap sync android
+
+      - name: Vérifier les ressources Android
+        run: |
+          echo "Vérification des ressources générées..."
+          find android/app/src/main/res -maxdepth 2 \
+            \( -iname '*launcher*' -o -iname '*splash*' \) -print
 
       - name: Construire l'APK
         run: |
